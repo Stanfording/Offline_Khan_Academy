@@ -1,0 +1,39 @@
+<!-- templates/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Offline AI Academy</title>
+    <style>
+        /* Add your beautiful homepage styling here */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .course-card { background-color: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; text-decoration: none; color: #1c1d1f; transition: box-shadow 0.2s; }
+        .course-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .course-card h3 { margin-top: 0; }
+        /* ... etc ... */
+    </style>
+</head>
+<body>
+    <h1>Courses</h1>
+    <p>Select a topic to start your personalized learning journey.</p>
+    <div id="course-grid" class="grid-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('course-grid');
+            const response = await fetch('/api/courses');
+            const courses = await response.json();
+
+            courses.forEach(category => {
+                const card = document.createElement('a');
+                card.className = 'course-card';
+                // This link now goes to the classroom and passes the topic as a URL parameter
+                card.href = `/classroom?topic=${encodeURIComponent(category.title)}`;
+                card.innerHTML = `<h3>${category.icon} ${category.title}</h3>`;
+                grid.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>

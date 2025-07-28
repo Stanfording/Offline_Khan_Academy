@@ -1,0 +1,86 @@
+[
+  {
+    "category_id": "math_pre_k_8",
+    "title": "Math: Pre-K - 8th grade",
+    "icon": "🧮",
+    "sub_topics": [
+      "Pre-K through grade 2 (Khan Kids)",
+      "2nd grade",
+      "3rd grade",
+      "4th grade",
+      "5th grade",
+      "6th grade",
+      "7th grade",
+      "8th grade"
+    ]
+  },
+  {
+    "category_id": "math_high_school_college",
+    "title": "Math: high school & college",
+    "icon": "🎓",
+    "sub_topics": [
+      "Algebra 1",
+      "Geometry",
+      "Algebra 2",
+      "Integrated math 1",
+      "Integrated math 2",
+      "Integrated math 3",
+      "Trigonometry",
+      "Precalculus",
+      "High school statistics",
+      "AP®︎/College Calculus AB",
+      "AP®︎/College Calculus BC",
+      "Multivariable calculus",
+      "Differential equations",
+      "Linear algebra"
+    ]
+  },
+  {
+    "category_id": "reading_language_arts",
+    "title": "Reading & language arts",
+    "icon": "📖",
+    "sub_topics": [
+      "Up to 2nd grade (Khan Kids)",
+      "3rd grade",
+      "4th grade reading and vocab",
+      "5th grade reading and vocab",
+      "6th grade reading and vocab",
+      "Grammar"
+    ]
+  },
+  {
+    "category_id": "science",
+    "title": "Science",
+    "icon": "🔬",
+    "sub_topics": [
+      "Middle school biology",
+      "High school biology",
+      "AP®︎/College Biology",
+      "Cosmology and astronomy"
+    ]
+  },
+  {
+    "category_id": "computing",
+    "title": "Computing",
+    "icon": "💻",
+    "sub_topics": [
+      "Intro to CS - Python",
+      "Computer programming",
+      "AP®︎/College Computer Science Principles",
+      "Computers and the Internet"
+    ]
+  },
+  {
+    "category_id": "life_skills",
+    "title": "Life skills",
+    "icon": "💡",
+    "sub_topics": [
+      "Financial literacy",
+      "Internet safety",
+      "Growth mindset",
+      "College admissions",
+      "Careers",
+      "Personal finance"
+    ]
+  }
+]
