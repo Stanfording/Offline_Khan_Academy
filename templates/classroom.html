@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline AI Academy - Classroom</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            color: #1c1d1f;
+        }
+        .sidebar {
+            width: 350px;
+            background-color: #ffffff;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #dedfe0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        .sidebar h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        .course-category {
+            margin-bottom: 10px;
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .category-header:hover {
+            background-color: #e9eef6;
+        }
+        .category-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #007bff;
+        }
+        .category-title {
+            font-weight: 500;
+            color: #333;
+        }
+        .sub-topics {
+            display: none; /* Hidden by default */
+            padding-left: 50px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 8px 8px;
+        }
+        .sub-topics.active {
+            display: block; /* Shown when active */
+        }
+        .sub-topic {
+            padding: 8px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            color: #555;
+        }
+        .sub-topic:hover {
+            background-color: #dee8f6;
+            color: #007bff;
+        }
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f9fbfc;
+        }
+        .chat-history {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #dedfe0;
+        }
+        .chat-history .message {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .chat-history .message strong {
+            color: #007bff;
+        }
+        .chat-history .message.user strong {
+            color: #28a745; /* Green for user */
+        }
+        .chat-history .message.system strong {
+            color: #dc3545; /* Red for system messages/errors */
+        }
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #dedfe0;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+        }
+        #questionInput {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            margin-right: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #questionInput:focus {
+            border-color: #007bff;
+        }
+        #askButton {
+            padding: 12px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #askButton:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        #askButton:active {
+            transform: translateY(0);
+        }
+
+        /* Styles for generated buttons */
+        .generated-button-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .generated-button {
+            padding: 8px 15px;
+            background-color: #6c757d; /* Grey for default buttons */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .generated-button:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+        .generated-button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Courses</h2>
+        <div id="course-list"></div>
+        <div style="margin-top: 30px;">
+            <a href="/" style="text-decoration: none; display: flex; align-items: center; color: #007bff; font-weight: 500;">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-history" id="responseArea">
+            <div class="message">Welcome to your Personal AI Academy! Please select a topic from the left to begin your lesson plan, or Mr. Delight will greet you if you came from the home page.</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="questionInput" placeholder="Ask a follow-up question...">
+            <button id="askButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const courseList = document.getElementById('course-list');
+            const questionInput = document.getElementById('questionInput');
+            const askButton = document.getElementById('askButton');
+            const responseArea = document.getElementById('responseArea');
+
+            // Get session_id from URL, or generate a new one if not present (e.g., direct access)
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id') || crypto.randomUUID();
+            const initialTopic = urlParams.get('topic');
+
+            // --- Fetch and display courses ---
+            async function fetchAndDisplayCourses() {
+                try {
+                    const response = await fetch('/api/courses');
+                    const courses = await response.json();
+                    
+                    courses.forEach(category => {
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'course-category';
+
+                        const header = document.createElement('div');
+                        header.className = 'category-header';
+                        header.innerHTML = `
+                            <span class="category-icon">${category.icon}</span>
+                            <span class="category-title">${category.title}</span>
+                        `;
+
+                        const subTopicsDiv = document.createElement('div');
+                        subTopicsDiv.className = 'sub-topics';
+                        category.sub_topics.forEach(topic => {
+                            const subTopicDiv = document.createElement('div');
+                            subTopicDiv.className = 'sub-topic';
+                            subTopicDiv.textContent = topic;
+                            subTopicDiv.addEventListener('click', () => {
+                                // When a sub-topic is clicked, ask the tutor to create a plan
+                                askTutor(`/plan ${topic}`);
+                            });
+                            subTopicsDiv.appendChild(subTopicDiv);
+                        });
+
+                        header.addEventListener('click', () => {
+                            // Toggle visibility of sub-topics
+                            subTopicsDiv.classList.toggle('active');
+                        });
+
+                        categoryDiv.appendChild(header);
+                        categoryDiv.appendChild(subTopicsDiv);
+                        courseList.appendChild(categoryDiv);
+                    });
+                } catch (error) {
+                    console.error('Failed to load courses:', error);
+                    courseList.textContent = 'Failed to load courses.';
+                }
+            }
+            
+            // --- Handle asking the tutor ---
+            async function askTutor(question) {
+                if (!question.trim()) {
+                    // If question is empty, and there's no initial topic, treat it as initial greeting
+                    if (!initialTopic) {
+                        // This branch executes only for the very first blank message to trigger Init
+                        // and not when initialTopic is present (as that also triggers Init implicitly)
+                    } else {
+                        // If initialTopic is present, a blank question is used to trigger Init,
+                        // but we don't want to add a "You:" message for it.
+                        // So, only append "You:" if it's a non-empty user input.
+                        if (question.trim() === '' && !initialTopic) { /* Do nothing, handle below */ }
+                        else if (question.trim() !== '') { appendMessage(`<strong>You:</strong> ${question}`, 'user'); }
+                    }
+                } else {
+                    appendMessage(`<strong>You:</strong> ${question}`, 'user');
+                }
+                
+                const thinkingDiv = document.createElement('div');
+                thinkingDiv.className = 'message';
+                thinkingDiv.innerHTML = '<strong>Mr. Delight:</strong> Thinking...';
+                responseArea.appendChild(thinkingDiv);
+                responseArea.scrollTop = responseArea.scrollHeight; // Scroll to bottom
+
+                try {
+                    const response = await fetch('/ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: question, session_id: sessionId }) // Pass session_id
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok.');
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let streamedResponse = '';
+                    
+                    // Replace "Thinking..." with the actual response div content area
+                    thinkingDiv.innerHTML = '<strong>Mr. Delight:</strong> '; 
+                    
+                    let buttonContainer = null; // To hold the container for buttons
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        const chunk = decoder.decode(value, { stream: true });
+                        streamedResponse += chunk;
+
+                        // Check for buttons in the accumulated response
+                        // Regex to find patterns like "▶/command display text"
+                        // This regex expects the button at the start of a line or after a space/newline
+                        const buttonRegex = /▶(\/[a-zA-Z0-9_]+)\s(.+?)(?=\n▶|\n|$)/g;
+                        let match;
+                        let textContent = streamedResponse;
+                        let buttonsToCreate = [];
+
+                        // Find all matches in the accumulated response
+                        while ((match = buttonRegex.exec(textContent)) !== null) {
+                            const command = match[1].trim();
+                            const displayText = match[2].trim();
+                            buttonsToCreate.push({ command, displayText });
+                            // Remove the button string from the text content
+                            // Use match[0] to replace the exact matched string
+                            textContent = textContent.replace(match[0], '').trim(); 
+                            // Reset lastIndex because textContent has changed
+                            buttonRegex.lastIndex = 0; 
+                        }
+                        
+                        // Clear previous buttons if new ones are found, or if the text has changed significantly
+                        if (buttonContainer) {
+                            buttonContainer.remove();
+                            buttonContainer = null; // Reset to re-create
+                        }
+
+                        // Display the text content (without button markers)
+                        thinkingDiv.innerHTML = '<strong>Mr. Delight:</strong> ' + textContent.replace(/\n/g, '<br>');
+
+                        // Add buttons if found
+                        if (buttonsToCreate.length > 0) {
+                            buttonContainer = document.createElement('div');
+                            buttonContainer.className = 'generated-button-container';
+                            buttonsToCreate.forEach(btn => {
+                                const buttonElement = document.createElement('button');
+                                buttonElement.className = 'generated-button';
+                                buttonElement.textContent = btn.displayText;
+                                buttonElement.setAttribute('data-command', btn.command);
+                                buttonElement.addEventListener('click', () => {
+                                    askTutor(btn.command); // Trigger the command when button is clicked
+                                });
+                                buttonContainer.appendChild(buttonElement);
+                            });
+                            thinkingDiv.appendChild(buttonContainer); // Append buttons below the text
+                        }
+
+                        responseArea.scrollTop = responseArea.scrollHeight; // Scroll to bottom
+                    }
+                } catch (error) {
+                    console.error("Error asking tutor:", error);
+                    thinkingDiv.innerHTML += `<br><span style="color: red;">Error: ${error.message}</span>`;
+                }
+                responseArea.scrollTop = responseArea.scrollHeight;
+            }
+
+            function appendMessage(html, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                messageDiv.innerHTML = html;
+                responseArea.appendChild(messageDiv);
+                responseArea.scrollTop = responseArea.scrollHeight;
+            }
+            
+            askButton.addEventListener('click', () => {
+                askTutor(questionInput.value);
+                questionInput.value = '';
+            });
+
+            questionInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    askTutor(questionInput.value);
+                    questionInput.value = '';
+                }
+            });
+
+            // --- Initial Load ---
+            fetchAndDisplayCourses();
+
+            // If a topic was passed in the URL, automatically ask the tutor to plan for it
+            if (initialTopic) {
+                // Clear initial welcome message
+                responseArea.innerHTML = '';
+                // First, trigger the initial greeting from Mr. Delight
+                askTutor(""); 
+                // Then, after a short delay, send the plan command for the specific topic
+                setTimeout(() => {
+                    askTutor(`/plan ${initialTopic}`);
+                }, 1000); // Give a second for the initial greeting to stream
+            } else {
+                // If no topic (e.g., direct classroom access), trigger the initial greeting by sending a blank question
+                askTutor("");
+            }
+        });
+    </script>
+</body>
+</html>
