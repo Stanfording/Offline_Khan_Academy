@@ -1,0 +1,30 @@
+We are building this app:
+
+We are building this app:
+
+1. It has the power of offline Khan Academy.
+2. It gives users the sense of magic notebook:
+- It shows the lesson like notes, very concise and intuitive.
+- Users can talk back to the notebook by writing underneath.
+3. UI: 
+- There's no longer a input box for users to type. All UI are customised by the AI's output.
+- Example: The AI can output a short answer question, then input field will be a box.
+- Example 2: The AI can output a multiple choice question, then the input field will be clicking the best option (or check box for more than one correct answer questions).
+- The total type of the UI should include but not limited to buttons, slide bars, check boxes, text boxes. 
+- There are also a set of UI that are fixed, such as give feed back button, next lesson button, skip practice button, reveal my status button.
+4. Mr. Delight should be able to plan courses and teach courses.
+Teaching mechanism:
+4.1. We will have a dictionary that stores users' status. Eg. {learning confident: [1 to 10], learning interest: [1 to 10], learning patient: [1 to 10], effort/focus: [1 to 10], weak concept spot: [text: [1 to 10]]} Based on users' feedback and interaction, we will keep updating and monitoring these to design more adaptive learning. 
+- 'learning confident' and 'weak concept spot': based on users' performance on each question they answered. If they reached confidence equal or greater than 9, we will start teaching the next lesson. Otherwise, we will provide more questions for them to answer and train. If we predict they will have 7 after answering the new question, but their newest answer only shows they have 5, we will lower the difficulty and provide easier questions, making sure they can learn and make it right, then increase the difficulty from there gradually. If they went above our expectation, we will level up the question to speed up the process. They should be able to finish 3 easy questions, 3 mid, and 3 hard for each lessons. We will also keep an eye on their 'weak concept spot', we will ask questions to strength their weak concept spot. We try not to move on to the next topic unless weak concept spot is cleared 80%. 
+- learning interest: Based on user's asking questions. The more good quality questions they ask, the higher the 'learning interest score'. We will record and monitor this. We will try to improve this score throughout the interaction with students while making sure we stay on track to the progress.
+- learning patient: If the user is stuck in one lesson/question for too long, (long means many trials without making progress) their learning patient will go down. We must keep this score high, through adjusting the level of difficulties and progress speed, without compromise the requirement:  3 easy questions, 3 mid, and 3 hard.
+- effort/focus: This score will always go down in each session. Each time they answer a question, read through your outputs, will always decrease their score on focus. It might affect their performance (learning interest, confident(performance), patient) as well. Each lesson ended, we will prompt to ask how well they are feeling. If the score  will be calculated by an weighted average of how long they have being studying, how many back and fort with AI, their feedback, their slope (speed of going down) of learning interest, learning confident, learning patient. The score will refresh after a reset button being pressed.
+4.2. Each lesson, we will have these steps:
+4.2.1. Intuition: An intuitive explanation of the concept, or an intuitive story, or an intuitive analogy. 
+4.2.2. Ask the users to paraphrase what they see and what they think (Short question UI).
+4.2.3. Begin the main class. Try to be concise, efficient, and intuitive. If you are not sure they are following you at one point, stop, and ask them to paraphrase or summarize what they see and what they think (Short question UI). Update their status dictionary, Teach accordingly while knowing the main structure and plan.
+4.2.4. After finish the lessons' concept part. Ask the users to summarize what they see and what they think (Short question UI).
+4.2.5. Based on the users summary, status dictionary, weak points, to build their customised lesson practice, designed to help them finding the 'flow mind state'. Helping them make progress and gain confident.
+4.2.6. Once they finished a lesson (reached >9 confidence), congrats them, and decide to recommend a break or continue to the next lesson based on their status dictionary. If they click 'I am refreshed, let's do the next lesson' or 'I can do another one', start the next one.
+5.The course plan should be generated in the begining based on the topic and grade level. Mr. Delight will follow it and will not go off topic, unless it is to answer users' question to encourage interest and curiousty. In that case, it will always try to make the topic revelent and go back to main track as fast as possible.
+6. To make sure the app is consistent, stable and structured, the output and input should always be in JSON format.

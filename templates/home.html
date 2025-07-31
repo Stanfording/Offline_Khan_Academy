@@ -1,95 +1,108 @@
 <!-- templates/home.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Offline AI Academy</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 40px; 
-            background-color: #f0f2f5;
-            color: #1c1d1f;
-        }
-        h1 {
-            color: #007bff;
-        }
-        p {
-            margin-bottom: 20px;
-        }
-        .grid-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-            gap: 20px; 
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .course-card { 
-            background-color: #fff; 
-            border: 1px solid #eee; 
-            border-radius: 8px; 
-            padding: 25px; 
-            text-decoration: none; 
-            color: #1c1d1f; 
-            transition: box-shadow 0.2s, transform 0.2s; 
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 120px;
-        }
-        .course-card:hover { 
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15); 
-            transform: translateY(-3px);
-        }
-        .course-card h3 { 
-            margin-top: 0; 
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-        }
-        .course-card h3 span {
-            margin-right: 10px;
-            font-size: 28px;
-        }
-        .course-card p {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 0;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        margin: 40px;
+        background-color: #f0f2f5;
+        color: #1c1d1f;
+      }
+      h1 {
+        color: #007bff;
+      }
+      p {
+        margin-bottom: 20px;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .course-card {
+        background-color: #fff;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 25px;
+        text-decoration: none;
+        color: #1c1d1f;
+        transition: box-shadow 0.2s, transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 120px;
+      }
+      .course-card:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+      }
+      .course-card h3 {
+        margin-top: 0;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+      }
+      .course-card h3 span {
+        margin-right: 10px;
+        font-size: 28px;
+      }
+      .course-card p {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Offline AI Academy Courses</h1>
-    <p>Select a topic to start your personalized learning journey with Mr. Delight.</p>
+    <p>
+      Select a topic to start your personalized learning journey with Mr.
+      Delight.
+    </p>
     <div id="course-grid" class="grid-container"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const grid = document.getElementById('course-grid');
-            try {
-                const response = await fetch('/api/courses');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const courses = await response.json();
+      document.addEventListener("DOMContentLoaded", async () => {
+        const grid = document.getElementById("course-grid");
+        try {
+          const response = await fetch("/api/courses");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const courses = await response.json();
 
-                courses.forEach(category => {
-                    const card = document.createElement('a');
-                    card.className = 'course-card';
-                    // Generate a new UUID for each session when entering a classroom
-                    const newSessionId = crypto.randomUUID(); 
-                    card.href = `/classroom?topic=${encodeURIComponent(category.title)}&session_id=${newSessionId}`;
-                    card.innerHTML = `
-                        <h3><span class="category-icon">${category.icon}</span>${category.title}</h3>
-                        <p>Explore sub-topics like: ${category.sub_topics.slice(0, 3).join(', ')}${category.sub_topics.length > 3 ? '...' : ''}</p>
+          courses.forEach((category) => {
+            const card = document.createElement("a");
+            card.className = "course-card";
+            // Generate a new UUID for each session when entering a classroom
+            const newSessionId = crypto.randomUUID();
+            card.href = `/classroom?topic=${encodeURIComponent(
+              category.title
+            )}&session_id=${newSessionId}`;
+            card.innerHTML = `
+                        <h3><span class="category-icon">${
+                          category.icon
+                        }</span>${category.title}</h3>
+                        <p>Explore sub-topics like: ${category.sub_topics
+                          .slice(0, 3)
+                          .join(", ")}${
+              category.sub_topics.length > 3 ? "..." : ""
+            }</p>
                     `;
-                    grid.appendChild(card);
-                });
-            } catch (error) {
-                console.error('Failed to load courses:', error);
-                grid.innerHTML = '<p style="color: red;">Failed to load courses. Please check the server.</p>';
-            }
-        });
+            grid.appendChild(card);
+          });
+        } catch (error) {
+          console.error("Failed to load courses:", error);
+          grid.innerHTML =
+            '<p style="color: red;">Failed to load courses. Please check the server.</p>';
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

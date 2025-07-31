@@ -1,13 +1,30 @@
 from flask import Flask, request, jsonify, render_template, Response
-from tutor import ask_tutor
+from tutor import ask_tutor, TUTOR_SYSTEM_PROMPT # Import TUTOR_SYSTEM_PROMPT for init check
 import json
-import uuid # For generating simple session IDs
+import uuid 
+import logging
 
 app = Flask(__name__)
 
-# Dictionary to store conversation contexts per session
-# In a real application, consider Flask sessions or a more persistent store (database, Redis)
-user_contexts = {}
+# Configure logging to see messages in the console
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Dictionary to store conversation message histories AND status dictionaries per session
+# Each session_id will map to a dict: {"messages": [], "status": {}}
+session_data = {}
+
+# Initial Status Dictionary structure (as per prompt)
+INITIAL_STATUS_DICT = {
+    "learning_confidence": 5,
+    "learning_interest": 5,
+    "learning_patience": 5,
+    "effort_focus": 10,
+    "weak_concept_spot": {},
+    "current_lesson_progress": 0,
+    "current_lesson_title": "",
+    "current_lesson_concepts": [],
+    "lesson_step_tracker": ""
+}
 
 @app.route('/')
 def home():
@@ -17,8 +34,17 @@ def home():
 @app.route('/classroom')
 def classroom():
     """Serves the classroom HTML page."""
-    # A new session ID is generated for each new classroom page load if not provided
     session_id = request.args.get('session_id', str(uuid.uuid4()))
+    
+    if session_id not in session_data:
+        # Initialize session data with empty messages and default status
+        session_data[session_id] = {
+            "messages": [],
+            "status": INITIAL_STATUS_DICT.copy() # Use .copy() to prevent shared references
+        }
+        logging.info(f"Initialized new session_id: {session_id} with default status.")
+    
+    logging.info(f"--- Classroom loaded for session_id: {session_id} ---")
     return render_template('classroom.html', session_id=session_id)
 
 @app.route('/api/courses')
@@ -29,49 +55,111 @@ def get_courses():
             courses_data = json.load(f)
         return jsonify(courses_data)
     except FileNotFoundError:
+        logging.error("courses.json not found")
         return jsonify({"error": "courses.json not found"}), 404
     except json.JSONDecodeError:
+        logging.error("Error decoding courses.json")
         return jsonify({"error": "Error decoding courses.json"}), 500
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    data = request.get_json()
-    question = data.get('question')
-    session_id = data.get('session_id') # Get session ID from request
+    req_data = request.get_json()
+    user_action = req_data.get('user_action') # This is the main input from frontend
+    session_id = req_data.get('session_id') 
 
-    if not question:
-        # Allow empty question for initial prompt (Mr. Delight's greeting)
-        # return jsonify({'error': 'No question provided'}), 400
-        pass
+    if not user_action or not isinstance(user_action, dict) or 'command' not in user_action:
+        logging.warning("Invalid or missing 'user_action' in /ask request.")
+        return jsonify({'error': 'Invalid or missing user_action'}), 400
+    
     if not session_id:
+        logging.warning("No session_id provided for /ask request.")
         return jsonify({'error': 'No session_id provided'}), 400
 
-    # Retrieve context for the current session, or start fresh if none exists
-    current_context = user_contexts.get(session_id)
+    # Retrieve current session data
+    current_session = session_data.get(session_id)
+    if current_session is None:
+        logging.warning(f"Session ID {session_id} not found in session_data during /ask. Initializing new session.")
+        current_session = {
+            "messages": [],
+            "status": INITIAL_STATUS_DICT.copy()
+        }
+        session_data[session_id] = current_session
 
-    def generate():
-        last_chunk_context = None
-        # The ask_tutor generator will yield content chunks, and finally a dict with "done" and "new_context"
-        for chunk_data in ask_tutor(question, current_context):
-            if isinstance(chunk_data, dict):
-                if chunk_data.get("done"):
-                    last_chunk_context = chunk_data.get("new_context")
-                    break # All content yielded, context obtained, stop iteration
-                elif "error" in chunk_data:
-                    yield json.dumps({"error": chunk_data["error"]}) # Send error as JSON
-                    break
-            else:
-                yield chunk_data # Yield text content
-        
-        # After the loop finishes (either due to break or generator exhaustion)
-        # store the last received context
-        if last_chunk_context is not None:
-            user_contexts[session_id] = last_chunk_context
-        # If no new context was provided (e.g., initial empty message before context is generated),
-        # or if the model response was an error, the old context remains or stays None.
-        # This is fine; the next request will use whatever is in user_contexts[session_id].
+    current_messages_history = current_session["messages"]
+    current_status_dictionary = current_session["status"]
 
-    return Response(generate(), mimetype='text/plain')
+    logging.info(f"[{session_id}] - Received /ask request: command='{user_action.get('command')}', params={user_action.get('parameters')}")
+    logging.info(f"[{session_id}] - Messages history length (before tutor call): {len(current_messages_history)}")
+    logging.info(f"[{session_id}] - Current Status Dictionary (before tutor call): {current_status_dictionary}")
+
+    # Call tutor.py. It will return the LLM's full JSON response and the updated message history.
+    llm_response_json, updated_messages_history = ask_tutor(
+        user_action, 
+        current_status_dictionary, # Pass the current status dict
+        current_messages_history
+    )
+
+    # Check for errors from tutor.py or LLM output
+    if "error" in llm_response_json:
+        logging.error(f"[{session_id}] - Error from ask_tutor: {llm_response_json['error']}")
+        return jsonify({"actions": [
+            {"command": "ui_display_notes", "parameters": {"content": f"Oops! Mr. Delight seems a bit stuck. Error: {llm_response_json['error']}"}}
+        ]}), 500
+    
+    # Update the session's message history in our global store
+    current_session["messages"] = updated_messages_history
+    logging.info(f"[{session_id}] - Messages history updated. New length: {len(current_session['messages'])}")
+
+    # --- Process and Apply Status Updates ---
+    final_actions_for_client = []
+    
+    for action in llm_response_json.get("actions", []):
+        if action.get("command") == "update_status":
+            updates = action.get("parameters", {}).get("updates", {})
+            logging.info(f"[{session_id}] - Applying status updates: {updates}")
+            for key, value_str in updates.items():
+                try:
+                    # Handle relative updates (e.g., "+1", "-0.5")
+                    if isinstance(value_str, str) and (value_str.startswith('+') or value_str.startswith('-')):
+                        delta = float(value_str)
+                        if '.' in key: # Handle nested keys like weak_concept_spot.Photosynthesis
+                            parts = key.split('.')
+                            temp_dict = current_status_dictionary
+                            for i, part in enumerate(parts):
+                                if i == len(parts) - 1:
+                                    temp_dict[part] = temp_dict.get(part, 0.0) + delta
+                                else:
+                                    temp_dict = temp_dict.setdefault(part, {})
+                        else:
+                            current_status_dictionary[key] = current_status_dictionary.get(key, 0.0) + delta
+                    else:
+                        # Handle direct assignments (numbers, strings, booleans, objects like {})
+                        # Try to parse as JSON for objects/arrays/numbers if they aren't simple strings
+                        try:
+                            val = json.loads(value_str) if isinstance(value_str, str) and (value_str.startswith('{') or value_str.startswith('[')) else value_str
+                            if '.' in key: # Handle nested keys
+                                parts = key.split('.')
+                                temp_dict = current_status_dictionary
+                                for i, part in enumerate(parts):
+                                    if i == len(parts) - 1:
+                                        temp_dict[part] = val
+                                    else:
+                                        temp_dict = temp_dict.setdefault(part, {})
+                            else:
+                                current_status_dictionary[key] = val
+                        except json.JSONDecodeError:
+                            current_status_dictionary[key] = value_str # Keep as string if not JSON parsable
+
+                except Exception as e:
+                    logging.error(f"[{session_id}] - Error applying status update for key '{key}': {e}")
+        else:
+            # Add other UI commands to the list to be sent to the client
+            final_actions_for_client.append(action)
+    
+    logging.info(f"[{session_id}] - Status Dictionary after updates: {current_status_dictionary}")
+    
+    # Return the remaining UI actions to the client
+    return jsonify({"actions": final_actions_for_client})
 
 if __name__ == '__main__':
     app.run(debug=True)
