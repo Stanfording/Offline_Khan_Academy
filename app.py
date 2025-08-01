@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify, render_template
-from tutor import ask_tutor, TUTOR_SYSTEM_PROMPT
+from tutor import ask_tutor
 import json
 import uuid
 import logging
+from dotenv import load_dotenv
+
+# Load .env automatically
+load_dotenv()
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,10 +33,7 @@ def home():
 def classroom():
     session_id = request.args.get('session_id', str(uuid.uuid4()))
     if session_id not in session_data:
-        session_data[session_id] = {
-            "messages": [],
-            "status": INITIAL_STATUS_DICT.copy()
-        }
+        session_data[session_id] = {"messages": [], "status": INITIAL_STATUS_DICT.copy()}
         logging.info(f"Initialized new session_id: {session_id}")
     return render_template('classroom.html', session_id=session_id)
 
@@ -62,6 +63,7 @@ def ask():
     req_data = request.get_json()
     user_action = req_data.get('user_action')
     session_id = req_data.get('session_id')
+
     if not user_action or not isinstance(user_action, dict) or 'command' not in user_action:
         return jsonify({'error': 'Invalid or missing user_action'}), 400
     if not session_id:
@@ -75,16 +77,14 @@ def ask():
     current_messages_history = current_session["messages"]
     current_status_dictionary = current_session["status"]
 
-    logging.info(f"[{session_id}] - /ask: command='{user_action.get('command')}', params={user_action.get('parameters')}")
-
     llm_response_json, updated_messages_history = ask_tutor(
         user_action,
         current_status_dictionary,
-        current_messages_history
+        current_messages_history,
+        session_id=session_id
     )
 
     if "error" in llm_response_json:
-        logging.error(f"[{session_id}] - Error from ask_tutor: {llm_response_json['error']}")
         return jsonify({"actions": [
             {"command": "ui_display_notes", "parameters": {"content": f"Oops! Mr. Delight seems a bit stuck. Error: {llm_response_json['error']}"}}
         ], "current_status": current_status_dictionary}), 500
@@ -132,7 +132,6 @@ def ask():
             final_actions_for_client.append(action)
 
     clamp_status(current_status_dictionary)
-
     stage = current_status_dictionary.get("lesson_stage")
     if isinstance(current_status_dictionary.get("current_lesson_progress"), (int, float)):
         if stage == "intuition" and current_status_dictionary["current_lesson_progress"] < 10:

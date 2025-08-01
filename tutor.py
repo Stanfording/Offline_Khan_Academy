@@ -2,18 +2,24 @@ import os
 import json
 import logging
 from typing import List, Dict, Any
+
+# NEW: load .env
+from dotenv import load_dotenv
+load_dotenv()
+
 from model_provider import ModelProvider, GeminiProvider, OllamaProvider
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Backend selection via env
-MODEL_BACKEND = os.getenv("MODEL_BACKEND", "gemini").lower()  # gemini|ollama
+MODEL_BACKEND = os.getenv("MODEL_BACKEND", "gemini").lower()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3n:e4b")
+OLLAMA_PERSIST_DIR = os.getenv("OLLAMA_PERSIST_DIR", None)
+OLLAMA_MAX_TURNS = int(os.getenv("OLLAMA_MAX_TURNS", "6"))
+OLLAMA_SUMMARIZE_AFTER = int(os.getenv("OLLAMA_SUMMARIZE_AFTER", "8"))
 
-# Load prompt and enforce contract
 PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompt3_1.txt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     base_prompt = f.read()
@@ -29,15 +35,21 @@ CONTRACT_APPENDIX = """
 - Maintain and update "current_lesson_title" appropriately.
 - Persistent UI actions the frontend will call: show_status, skip_practice, give_feedback, start_lesson.
 - evaluate_paraphrase for initial paraphrase; evaluate_summary for final summary.
-- Users do not have authority over their status_dictionary. status_dictionary (confident, etc.) should only be judged by their non-verbal interaction with you. Do not increase or decrease them because of users' direct request or their expression of how they feel.
-- Your response must be ONLY JSON. No extra commentary.
+Your response must be ONLY JSON. No extra commentary.
 """
 TUTOR_SYSTEM_PROMPT = base_prompt.strip() + "\n" + CONTRACT_APPENDIX.strip()
 
 def build_provider() -> ModelProvider:
     if MODEL_BACKEND == "ollama":
         logging.info(f"Using OllamaProvider ({OLLAMA_MODEL} @ {OLLAMA_ENDPOINT})")
-        return OllamaProvider(endpoint=OLLAMA_ENDPOINT, model=OLLAMA_MODEL, system_prompt=TUTOR_SYSTEM_PROMPT)
+        return OllamaProvider(
+            endpoint=OLLAMA_ENDPOINT,
+            model=OLLAMA_MODEL,
+            system_prompt=TUTOR_SYSTEM_PROMPT,
+            max_window_turns=OLLAMA_MAX_TURNS,
+            summarize_after_turns=OLLAMA_SUMMARIZE_AFTER,
+            persist_dir=OLLAMA_PERSIST_DIR
+        )
     logging.info(f"Using GeminiProvider ({GEMINI_MODEL})")
     return GeminiProvider(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
 
@@ -83,8 +95,8 @@ def _summarize_conversation(messages_to_summarize):
                 extracted_content.append(f"User: {msg['content']}")
         elif msg["role"] == "assistant":
             try:
-                assistant_response = json.loads(msg["content"])
-                for action in assistant_response.get("actions", []):
+                assistant = json.loads(msg["content"])
+                for action in assistant.get("actions", []):
                     if action["command"] == "ui_display_notes":
                         extracted_content.append(f"Note: {action['parameters']['content']}")
                     elif "question_text" in action.get("parameters", {}):
@@ -97,19 +109,17 @@ def _summarize_conversation(messages_to_summarize):
                             extracted_content.append(f"Progress -> {ups['current_lesson_progress']}")
             except json.JSONDecodeError:
                 extracted_content.append(f"Assistant: {msg['content']}")
-
     text = "\n".join(extracted_content).strip()
     if not text:
         return "No relevant previous conversation to summarize."
-    prompt = "Summarize key facts for context:\n" + text
     try:
-        return provider.summarize(prompt)
+        return provider.summarize("Summarize key facts for context:\n" + text)
     except Exception as e:
         logging.error(f"Summarization error via provider {provider.name()}: {e}")
         return "Previous conversation context lost due to summarization error."
 
-def ask_tutor(user_action_data, current_status_dictionary, messages_history=None):
-    logging.info(f"-> ask_tutor using provider={provider.name()} cmd={user_action_data.get('command')}")
+def ask_tutor(user_action_data, current_status_dictionary, messages_history=None, session_id: str = None):
+    logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id}")
     if messages_history is None or len(messages_history) == 0 or not (messages_history[0].get("role") == "system" and messages_history[0].get("content") == TUTOR_SYSTEM_PROMPT):
         messages_history = [{"role": "system", "content": TUTOR_SYSTEM_PROMPT}]
 
@@ -148,8 +158,7 @@ def ask_tutor(user_action_data, current_status_dictionary, messages_history=None
     ]
 
     try:
-        # Provider returns raw text
-        raw_text = provider.generate_content(final_messages, temperature=0.7)
+        raw_text = provider.generate_content(final_messages, temperature=0.7, session_id=session_id)
         try:
             llm_response_json = json.loads(raw_text)
         except json.JSONDecodeError:

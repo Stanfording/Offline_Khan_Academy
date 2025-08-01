@@ -1,263 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
     <title>The Magic Notebook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Kalam:wght@400;700&display=swap" rel="stylesheet"/>
+
     <style>
-      :root {
-        --paper-bg: #faf7f2;
-        --ink: #2c2a27;
-        --accent: #00bcd4;
-        --note-bg: #fffdf7;
-        --question-bg: #fffbe9;
-        --paper-line: rgba(0, 0, 0, 0.06);
+      :root{
+        --parchment:#efe2bf;
+        --parchment-deep:#e6d5a6;
+        --ink:#2b2622;
+        --sepia:#5a3f25;
+        --gold:#a77b2b;
+        --shadow:rgba(0,0,0,.22);
+        --shadow2:rgba(0,0,0,.10);
       }
-      body {
-        font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto,
-          Helvetica, Arial, sans-serif;
-        margin: 0;
-        min-height: 100vh;
-        color: var(--ink);
-        background: linear-gradient(
-            180deg,
-            rgba(250, 247, 242, 1) 0%,
-            rgba(250, 247, 242, 0.6) 100%
-          ),
-          repeating-linear-gradient(
-            #faf7f2,
-            #faf7f2 28px,
-            #f2ece4 29px,
-            #faf7f2 30px
-          );
+      html,body{height:100%}
+      body{
+        margin:0;color:var(--ink);
+        font-family:"Kalam","Caveat","Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+        background:
+          radial-gradient(ellipse at center, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 65%, rgba(0,0,0,.35) 100%),
+          url('https://i.imgur.com/o7r6n0E.jpg') center/cover fixed,
+          url('https://i.imgur.com/0H0bq3W.png') repeat fixed,
+          url('https://i.imgur.com/3n1m3Vw.png') center/cover fixed,
+          linear-gradient(var(--parchment),var(--parchment-deep));
+        background-blend-mode: multiply, multiply, overlay, multiply, normal;
       }
-      .page-wrap {
-        max-width: 920px;
-        margin: 0 auto;
-        padding: 24px 20px 40px;
-      }
-      h1 {
-        text-align: center;
-        color: var(--ink);
-        letter-spacing: 0.3px;
-        margin: 8px 0 16px;
-        font-weight: 800;
-      }
-      .notebook {
-        background: var(--note-bg);
-        border-radius: 12px;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08),
-          0 2px 6px rgba(0, 0, 0, 0.06);
-        border: 1px solid #eee3d4;
-        overflow: hidden;
-      }
-      .notebook-header {
-        padding: 12px 16px;
-        background: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.9),
-            rgba(255, 255, 255, 0.7)
-          ),
-          repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 24px,
-            rgba(0, 0, 0, 0.05) 25px,
-            transparent 26px
-          );
-        border-bottom: 1px solid #eee3d4;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .spiral {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        border: 2px solid #c0a98e;
-        box-shadow: inset 0 0 0 2px #fff;
-      }
-      .progress-container {
-        flex: 1;
-        background-color: #f2ece4;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #e6d9c7;
-      }
-      .progress-bar {
-        height: 16px;
-        width: 0%;
-        background: linear-gradient(90deg, #2ecc71, #00bcd4);
-        text-align: right;
-        color: white;
-        font-size: 11px;
-        line-height: 16px;
-        padding-right: 6px;
-        transition: width 0.5s ease-in-out;
-      }
-      .content {
-        display: grid;
-        grid-template-rows: auto 1fr auto auto;
-      }
-      .chat-container {
+      .page-wrap{max-width:1060px;margin:0 auto;padding:22px 16px 40px}
+
+      /* Hand-drawn, no-straight-lines look using blobs and curves */
+      .blob-card{
+        position:relative;
+        background:rgba(255,252,243,.9);
+        filter: drop-shadow(0 18px 40px var(--shadow)) drop-shadow(0 3px 10px var(--shadow2));
+        --r: 22px;
+        clip-path: path("M15,30 
+                         C20,8 110,0 180,10 
+                         C260,20 340,20 430,12 
+                         C520,5 620,8 645,28 
+                         C670,48 670,90 650,120
+                         C630,150 610,220 540,230
+                         C470,240 300,240 210,230
+                         C120,220 60,210 40,185
+                         C20,160 10,60 15,30 Z");
         padding: 16px;
-        height: 58vh;
-        overflow-y: auto;
-        background: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.7),
-            rgba(255, 255, 255, 0.6)
-          ),
-          repeating-linear-gradient(
-            #fffdf7,
-            #fffdf7 28px,
-            var(--paper-line) 29px,
-            #fffdf7 30px
-          );
       }
-      .note {
-        background-color: #ffffff;
-        padding: 12px 14px;
-        margin: 10px 0;
-        border-left: 5px solid var(--accent);
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-        animation: inkReveal 0.4s ease-in;
+      .blob-thin{
+        clip-path: path("M15,20 
+                         C40,0 200,0 310,10 
+                         C420,20 520,15 590,8
+                         C660,0 680,20 690,40
+                         C700,60 700,70 690,90
+                         C680,110 650,120 600,125
+                         C550,130 360,130 260,125
+                         C160,120 60,120 30,100
+                         C0,80 0,40 15,20 Z");
       }
-      .question {
-        background-color: var(--question-bg);
-        padding: 12px 14px;
-        margin: 10px 0;
-        border-left: 5px solid #ffc107;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-        animation: inkReveal 0.4s ease-in;
+      .notebook{
+        position:relative;margin:0 auto;max-width:980px;
       }
-      @keyframes inkReveal {
-        from {
-          opacity: 0;
-          transform: translateY(4px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      .frame{
+        position:relative;
+        padding:10px;
       }
-      .input-area {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        padding: 12px 16px;
-        border-top: 1px dashed #e6d9c7;
-        background: #fffaf0;
+      .frame::before{
+        content:"";
+        position:absolute;inset:0;pointer-events:none;
+        background:
+          url('https://i.imgur.com/Q6cZ7Db.png') repeat;
+        mix-blend-mode:multiply;opacity:.35;
       }
-      .persistent-buttons-area {
-        display: flex;
-        gap: 10px;
-        padding: 12px 16px;
-        border-top: 1px solid #eee3d4;
-        justify-content: center;
-        background: #fffdf7;
+      .frame::after{
+        content:"";
+        position:absolute;inset:0;pointer-events:none;
+        background:
+          url('https://i.imgur.com/Fr6YxKQ.png') center/cover,
+          radial-gradient(ellipse at center, rgba(0,0,0,0) 65%, rgba(0,0,0,.18) 100%);
+        mix-blend-mode:multiply;opacity:.45;
       }
-      .raw-json-output {
-        background-color: #fffaf5;
-        padding: 10px;
-        border-top: 1px dashed #e0d2be;
-        white-space: pre-wrap;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", monospace;
-        max-height: 150px;
-        overflow: auto;
-        color: #5a554d;
+
+      h1{
+        text-align:center;margin:6px 0 14px;
+        color:var(--sepia);letter-spacing:.5px;font-weight:700;
+        text-shadow:0 1px 0 rgba(255,255,255,.35);
       }
-      .user-message {
-        text-align: right;
-        background-color: #e9fff0;
-        padding: 6px 8px;
-        margin: 8px 0;
-        border-right: 3px solid #2ecc71;
-        border-radius: 6px;
+
+      .notebook-header .ribbon{
+        height:26px;min-width:150px;background:linear-gradient(180deg,#d0b06c,#9d7934);
+        color:#fff;display:flex;align-items:center;justify-content:center;
+        border-radius:14px 6px 14px 6px;
+        box-shadow:0 2px 6px var(--shadow2);font-weight:700;letter-spacing:.5px
       }
-      .error-message {
-        color: #b00020;
-        font-weight: 600;
-        background-color: #ffe8e8;
-        padding: 6px;
-        border-left: 3px solid #b00020;
-        border-radius: 6px;
-        margin: 8px 0;
+      .header-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+      .progress-wrap{flex:1;display:flex;align-items:center;gap:10px}
+      .progress-blob{
+        position:relative;height:20px;flex:1;background:#e3d2a5;color:#fff;
+        clip-path: path("M10,10 C30,-5 150,-5 250,8 C350,20 450,8 520,5 C610,0 640,20 650,30 C660,40 660,60 650,70 C640,80 600,90 530,92 C460,94 360,94 260,92 C160,90 60,88 30,70 C0,52 -10,25 10,10 Z");
+        overflow:hidden;
       }
-      button {
-        padding: 8px 14px;
-        cursor: pointer;
-        border: 1px solid #e0d2be;
-        background-color: #fff;
-        border-radius: 8px;
-        color: var(--ink);
-        transition: transform 0.05s ease, box-shadow 0.2s ease,
-          background 0.2s ease;
-        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+      .progress-bar{
+        position:absolute;left:0;top:0;height:100%;width:0%;
+        background:linear-gradient(90deg,#b98b3b,#7fb16e);
+        transition:width .5s ease;
       }
-      button:hover {
-        background-color: #fff6e9;
+      .progress-text{position:absolute;right:10px;top:0;height:100%;display:flex;align-items:center;font-size:12px}
+
+      .btn{
+        padding:7px 12px;background:#fff6e3;cursor:pointer;
+        border:none; /* remove straight borders */
+        border-radius:16px/12px;
+        box-shadow:0 1px 0 rgba(0,0,0,.06);
+        transition:transform .05s ease, box-shadow .2s ease, background .2s ease;
+        font-family:"Kalam",cursive;color:var(--sepia)
       }
-      button:active {
-        transform: translateY(1px);
+      .btn:hover{background:#fff0cf}
+      .btn:active{transform:translateY(1px)}
+      .btn-gold{background:linear-gradient(180deg,#fff1cf,#ffe3a3)}
+      .btn-ghost{background:rgba(255,255,255,.75)}
+      .tools-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+
+      .chat-container{
+        margin-top:10px; padding:14px; height:58vh; overflow-y:auto;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.64), rgba(255,255,255,.54)),
+          repeating-linear-gradient(#fffaf0,#fffaf0 28px, rgba(0,0,0,.06) 29px, #fffaf0 30px);
+        border-radius:18px/14px;
       }
-      input[type="text"] {
-        flex-grow: 1;
-        padding: 10px 12px;
-        border: 1px solid #e0d2be;
-        border-radius: 8px;
-        background: #fffdf9;
+
+      .note,.question{
+        position:relative;padding:12px 14px;margin:12px 0;border-radius:14px/12px;
+        box-shadow:0 2px 6px rgba(0,0,0,.05);
+        font-size:1.06rem;color:var(--ink);
+        background:rgba(255,255,255,.92);
       }
-      .rearrange-container {
-        border: 1px dashed #d9ccb8;
-        padding: 10px;
-        min-height: 50px;
-        background-color: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        width: 100%;
-        border-radius: 8px;
+      .note{ outline: 3px solid rgba(127,177,110,.35); outline-offset: -6px;}
+      .question{ background:#fff3d3; outline: 3px solid rgba(185,139,59,.3); outline-offset: -6px;}
+      .typewriter{display:inline-block;white-space:pre-wrap}
+
+      .input-area{
+        margin-top:10px; padding:12px 14px; border-radius:16px/12px;
+        background:rgba(255,250,240,.88);
       }
-      .rearrange-item {
-        background-color: #f3f0ff;
-        padding: 8px;
-        border: 1px solid #c3c3e6;
-        border-radius: 6px;
-        cursor: grab;
-        user-select: none;
+      input[type="text"]{
+        width:100%; padding:10px 12px; border:none; border-radius:12px/10px;
+        background:#fffdf6; box-shadow: inset 0 0 0 2px rgba(185,155,100,.35);
+        font-family:"Kalam","Caveat",cursive;font-size:1.05rem;color:var(--ink)
       }
-      .rearrange-item.dragging {
-        opacity: 0.5;
-      }
-      canvas {
-        touch-action: none;
-        background-color: #fff;
-        border: 1px solid #d3c8b8;
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-      }
-      input[type="range"] {
-        width: 100%;
-        margin: 10px 0;
-      }
-      input[type="radio"],
-      input[type="checkbox"] {
-        margin-right: 5px;
-      }
-      label {
-        margin-bottom: 5px;
-        display: inline-block;
-      }
-      .toolbar-label {
-        font-weight: 700;
-        font-size: 14px;
-        margin-right: 6px;
-      }
+      .inline-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+      .math-keypad{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+      .math-keypad button{padding:6px 10px;border:none;border-radius:10px;background:#fff;cursor:pointer;font-family:"Kalam",cursive;box-shadow:0 0 0 2px rgba(185,155,100,.35) inset}
+
+      .rearrange-container{padding:10px;min-height:70px;background:#fff;border-radius:14px/10px;box-shadow: inset 0 0 0 2px rgba(185,155,100,.35)}
+      .rearrange-item{background:#f7f3ea;padding:8px;border-radius:12px/10px;cursor:grab;user-select:none;margin-bottom:6px;box-shadow:0 0 0 2px rgba(185,155,100,.35) inset}
+      .rearrange-item.dragging{opacity:.55}
+      .drop-highlight{outline:3px dashed rgba(185,139,59,.6); outline-offset:6px; transition: outline-color .2s ease}
+
+      .raw-json-output{background:#fff7ea;margin-top:10px;padding:10px;border-radius:14px/12px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;max-height:150px;overflow:auto;color:#5a554d}
+      .user-message{background:#e9fff0;padding:6px 8px;margin:8px 0;border-radius:12px/10px}
+      .error-message{color:#8b1e1e;font-weight:700;background:#ffe8e8;padding:6px;border-radius:12px/10px;margin:8px 0}
+
+      /* Spellbook panel (UI tests) */
+      .spellbook{margin-top:10px; padding:10px; border-radius:16px/12px; background:rgba(255,252,240,.85); display:flex; gap:8px; flex-wrap:wrap}
+      .spellbook .btn{font-size:.9rem}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
@@ -266,18 +173,48 @@
       <h1>The Magic Notebook ✨</h1>
 
       <div class="notebook">
-        <div class="notebook-header">
-          <div class="spiral"></div>
-          <div class="toolbar-label">Lesson Progress</div>
-          <div class="progress-container">
-            <div class="progress-bar" id="lessonProgressBar">0%</div>
+        <div class="frame blob-card">
+          <div class="notebook-header">
+            <div class="header-row">
+              <div class="ribbon">Lesson</div>
+              <div class="progress-wrap">
+                <div class="progress-blob">
+                  <div class="progress-bar" id="lessonProgressBar"></div>
+                  <div class="progress-text" id="lessonProgressText">0%</div>
+                </div>
+              </div>
+              <div class="tools-row">
+                <button id="toggleTypewriterBtn" class="btn btn-gold">Disable Typewriter</button>
+                <button id="speakSelectionBtn" class="btn btn-ghost">🔊 Speak Selection</button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="content">
+          <div class="tools-row" style="margin-top:10px">
+            <span style="font-weight:700;color:var(--sepia)">Tools:</span>
+            <button id="btnFeedback" class="btn">Give Feedback</button>
+            <button id="btnNextLesson" class="btn">Next Lesson</button>
+            <button id="btnSkipPractice" class="btn">Skip Practice</button>
+            <button id="btnRevealStatus" class="btn">Reveal My Status</button>
+          </div>
+
           <div class="chat-container" id="chatContainer"></div>
+
           <div id="dynamicInputArea" class="input-area"></div>
-          <div id="persistentButtonsArea" class="persistent-buttons-area"></div>
+
+          <!-- Spellbook test panel -->
+          <div class="spellbook" id="spellbook">
+            <span style="font-weight:700;color:var(--sepia)">Spellbook (UI test):</span>
+            <button class="btn" data-spell="notes">Notes</button>
+            <button class="btn" data-spell="short">Short Answer</button>
+            <button class="btn" data-spell="short-math">Short Answer (Math)</button>
+            <button class="btn" data-spell="mcq">MCQ</button>
+            <button class="btn" data-spell="checkbox">Checkbox</button>
+            <button class="btn" data-spell="slider">Slider</button>
+            <button class="btn" data-spell="rearrange">Rearrange</button>
+            <button class="btn" data-spell="draw">Drawing</button>
+          </div>
+
           <div class="raw-json-output">
             <strong>Raw LLM Response (debug):</strong>
             <pre id="rawOutput"></pre>
@@ -291,439 +228,345 @@
       const chatContainer = document.getElementById("chatContainer");
       const dynamicInputArea = document.getElementById("dynamicInputArea");
       const rawOutputDiv = document.getElementById("rawOutput");
-      const lessonProgressBar = document.getElementById("lessonProgressBar");
-      const persistentButtonsArea = document.getElementById(
-        "persistentButtonsArea"
-      );
+      const bar = document.getElementById("lessonProgressBar");
+      const barText = document.getElementById("lessonProgressText");
+      const toggleTypewriterBtn = document.getElementById("toggleTypewriterBtn");
+      const speakSelectionBtn = document.getElementById("speakSelectionBtn");
+      const spellbook = document.getElementById("spellbook");
 
-      let currentStatus = {
-        learning_confidence: 5,
-        learning_interest: 5,
-        learning_patience: 5,
-        effort_focus: 10,
-        weak_concept_spot: {},
-        current_lesson_progress: 0,
-        lesson_stage: "not_in_lesson",
-        current_lesson_title: "",
-        active_question_id: "",
+      const btnFeedback = document.getElementById('btnFeedback');
+      const btnNextLesson = document.getElementById('btnNextLesson');
+      const btnSkipPractice = document.getElementById('btnSkipPractice');
+      const btnRevealStatus = document.getElementById('btnRevealStatus');
+
+      // Route answers correctly using pending meta
+      let pendingInputMeta = null; // { type, variable, testQuestionId? }
+
+      // Local Test Registry for Spellbook
+      const TestRegistry = {
+        // id -> {type, variable_name, correct, concept, options?}
+        byId: {},
+        add(q){ this.byId[q.id]=q; },
+        get(id){ return this.byId[id]; }
       };
 
-      function updateProgressBar(progress) {
-        progress = Math.max(0, Math.min(100, progress || 0));
-        lessonProgressBar.style.width = `${progress}%`;
-        lessonProgressBar.textContent = `${Math.round(progress)}%`;
-      }
+      // Typewriter
+      let typewriterEnabled = (localStorage.getItem('typewriterEnabled') ?? 'true') === 'true';
+      const updateTypewriterButton = () => toggleTypewriterBtn.textContent = typewriterEnabled ? 'Disable Typewriter' : 'Enable Typewriter';
+      toggleTypewriterBtn.addEventListener('click', ()=>{ typewriterEnabled=!typewriterEnabled; localStorage.setItem('typewriterEnabled',String(typewriterEnabled)); updateTypewriterButton(); });
+      updateTypewriterButton();
 
-      function setupPersistentButtons() {
-        persistentButtonsArea.innerHTML = `
-          <button id="btnFeedback">Give Feedback</button>
-          <button id="btnNextLesson">Next Lesson</button>
-          <button id="btnSkipPractice">Skip Practice</button>
-          <button id="btnRevealStatus">Reveal My Status</button>
-        `;
-        document.getElementById("btnFeedback").addEventListener("click", () => {
-          // Triggers LLM to ask feedback question UI
-          sendActionToBackend("give_feedback", {});
-        });
-        document
-          .getElementById("btnNextLesson")
-          .addEventListener("click", () => {
-            // Ask LLM to start next lesson (engine should interpret 'next')
-            sendActionToBackend("start_lesson", { lesson_index: "next" });
-          });
-        document
-          .getElementById("btnSkipPractice")
-          .addEventListener("click", () => {
-            sendActionToBackend("skip_practice", {});
-          });
-        document
-          .getElementById("btnRevealStatus")
-          .addEventListener("click", () => {
-            // Frontend/back-end handle this directly (no LLM needed)
-            renderStatusSnapshot();
-          });
-        updatePersistentButtons();
-      }
+      // Speak selection
+      function speak(text){ if(!window.speechSynthesis){ alert("Speech not supported."); return; } const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+      const getSelectionText = ()=> (window.getSelection()?.toString() || '').trim();
+      speakSelectionBtn.addEventListener('click', ()=>{ const t=getSelectionText(); if(t) speak(t); });
+      chatContainer.addEventListener('dblclick', ()=>{ const t=getSelectionText(); if(t) speak(t); });
 
-      function updatePersistentButtons() {
-        const stage = currentStatus.lesson_stage;
-        const progress = currentStatus.current_lesson_progress;
+      // Status
+      let currentStatus = { learning_confidence:5, learning_interest:5, learning_patience:5, effort_focus:10, weak_concept_spot:{}, current_lesson_progress:0, lesson_stage:"not_in_lesson", current_lesson_title:"", active_question_id:"" };
 
-        const btnFeedback = document.getElementById("btnFeedback");
-        const btnNextLesson = document.getElementById("btnNextLesson");
-        const btnSkipPractice = document.getElementById("btnSkipPractice");
-        const btnRevealStatus = document.getElementById("btnRevealStatus");
+      function updateProgress(p){ p=Math.max(0,Math.min(100,p||0)); bar.style.width=`${p}%`; barText.textContent=`${Math.round(p)}%`; }
+      function updateToolbar(){ const s=currentStatus.lesson_stage, p=currentStatus.current_lesson_progress; btnNextLesson.disabled=!(s==='lesson_complete'||p>=95); btnNextLesson.style.opacity=btnNextLesson.disabled?0.5:1; btnSkipPractice.style.display=(s==='practice')?'inline-block':'none'; }
 
-        if (btnFeedback) btnFeedback.disabled = false;
-        if (btnRevealStatus) btnRevealStatus.disabled = false;
+      // Toolbar actions
+      btnFeedback.addEventListener('click', ()=> sendAction('give_feedback',{}));
+      btnNextLesson.addEventListener('click', ()=> sendAction('start_lesson',{lesson_index:'next'}));
+      btnSkipPractice.addEventListener('click', ()=> sendAction('skip_practice',{}));
+      btnRevealStatus.addEventListener('click', renderStatusSnapshot);
 
-        if (btnNextLesson) {
-          btnNextLesson.disabled = !(
-            stage === "lesson_complete" || progress >= 95
-          );
-          btnNextLesson.style.display =
-            stage && stage !== "not_in_lesson" ? "inline-block" : "none";
-        }
-
-        if (btnSkipPractice) {
-          btnSkipPractice.style.display =
-            stage === "practice" ? "inline-block" : "none";
-        }
-      }
-
-      function renderStatusSnapshot() {
-        const s = currentStatus;
-        const content = `
+      function renderStatusSnapshot(){
+        const s=currentStatus;
+        const html = `
           <div><strong>Confidence:</strong> ${s.learning_confidence}/10</div>
           <div><strong>Interest:</strong> ${s.learning_interest}/10</div>
           <div><strong>Patience:</strong> ${s.learning_patience}/10</div>
           <div><strong>Focus:</strong> ${s.effort_focus}/10</div>
           <div><strong>Stage:</strong> ${s.lesson_stage}</div>
-          <div><strong>Progress:</strong> ${s.current_lesson_progress}%</div>
-        `;
-        chatContainer.innerHTML += `<div class="note">${content}</div>`;
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+          <div><strong>Progress:</strong> ${s.current_lesson_progress}%</div>`;
+        const el=document.createElement('div'); el.className='note'; el.innerHTML=html; chatContainer.appendChild(el); chatContainer.scrollTop=chatContainer.scrollHeight;
       }
 
-      async function sendActionToBackend(command, parameters = {}) {
-        const payload = {
-          session_id: sessionId,
-          user_action: { command, parameters },
-        };
+      async function sendAction(command, parameters = {}){
+        const payload = { session_id:sessionId, user_action:{ command, parameters } };
+        const msg=document.createElement('div'); msg.className='user-message';
+        msg.innerHTML=`<strong>You:</strong> ${command} ${Object.keys(parameters).length?JSON.stringify(parameters):''}`;
+        chatContainer.appendChild(msg);
 
-        chatContainer.innerHTML += `<div class="user-message"><strong>You:</strong> ${command} ${
-          Object.keys(parameters).length ? JSON.stringify(parameters) : ""
-        }</div>`;
+        try{
+          const res=await fetch("/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data=await res.json();
+          rawOutputDiv.textContent=JSON.stringify(data,null,2);
+          dynamicInputArea.innerHTML="";
+          pendingInputMeta = null;
 
-        try {
-          const response = await fetch("/ask", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          if(data.current_status){ currentStatus=data.current_status; updateProgress(currentStatus.current_lesson_progress||0); updateToolbar(); }
+          if(Array.isArray(data.actions)){ for(const a of data.actions) renderAction(a); }
+          else{ const e=document.createElement('div'); e.className='error-message'; e.textContent='Invalid AI response format.'; chatContainer.appendChild(e); }
+        }catch(err){
+          const e=document.createElement('div'); e.className='error-message'; e.textContent=`Error communicating with AI: ${err.message}`; chatContainer.appendChild(e);
+        }finally{ chatContainer.scrollTop=chatContainer.scrollHeight; }
+      }
 
-          const data = await response.json();
-          rawOutputDiv.textContent = JSON.stringify(data, null, 2);
+      function typewriter(el, html){
+        if(!typewriterEnabled){ el.innerHTML=html; return; }
+        const temp=document.createElement('div'); temp.innerHTML=html;
+        const text=temp.textContent||temp.innerText||"";
+        const span=document.createElement('span'); span.className='typewriter'; el.appendChild(span);
+        let i=0, speed=12; const t=setInterval(()=>{ span.textContent=text.slice(0,i++); if(i>text.length) clearInterval(t); }, speed);
+      }
 
-          dynamicInputArea.innerHTML = "";
-
-          if (data.current_status) {
-            currentStatus = data.current_status;
-            updateProgressBar(currentStatus.current_lesson_progress || 0);
-            updatePersistentButtons();
+      function renderAction(action){
+        const p=action.parameters||{};
+        switch(action.command){
+          case "ui_display_notes":{
+            const el=document.createElement('div'); el.className='note'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.content||"")); break;
           }
+          case "ui_short_answer":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.question_text||""));
+            const v=p.variable_name;
+            if(v==="initial_paraphrase") pendingInputMeta={type:"paraphrase", variable:v};
+            else if(v==="final_summary") pendingInputMeta={type:"summary", variable:v};
+            else if(v==="user_feedback_input") pendingInputMeta={type:"feedback", variable:v};
+            else pendingInputMeta={type:"answer", variable:v};
 
-          if (data.actions && Array.isArray(data.actions)) {
-            for (const action of data.actions) {
-              renderUICommand(action);
-            }
-          } else {
-            chatContainer.innerHTML += `<div class="error-message">Invalid AI response format.</div>`;
+            const needsMath=p.hints&&(p.hints.math_input===true);
+            dynamicInputArea.innerHTML = `
+              <input type="text" id="${v}" placeholder="${p.placeholder||""}">
+              <div class="inline-actions">
+                <button class="btn btn-gold" onclick="handleUserInput('${v}','text')">Send</button>
+                <button id="micBtn" class="btn">🎤 Press to speak</button>
+              </div>
+              ${needsMath?`
+              <div class="math-keypad" aria-label="Math keypad">
+                <button data-k="+">+</button><button data-k="-">−</button><button data-k="*">×</button><button data-k="/">÷</button>
+                <button data-k="=">=</button><button data-k="^">^</button><button data-k="(">(</button><button data-k=")">)</button>
+                <button data-k="x">x</button><button data-k="y">y</button>
+                <button data-k="backspace">⌫</button><button data-k="clear">Clear</button>
+              </div>`:''}
+            `;
+            if(needsMath) attachMath(v);
+            attachVoice('micBtn', v);
+            document.getElementById(v)?.focus();
+            break;
           }
-        } catch (err) {
-          console.error("Error:", err);
-          chatContainer.innerHTML += `<div class="error-message">Error communicating with AI: ${err.message}</div>`;
-        } finally {
-          chatContainer.scrollTop = chatContainer.scrollHeight;
+          case "ui_mcq":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.question_text||""));
+            const opts=(p.options||[]).map((opt,i)=>`<label style="display:block;margin:4px 0;"><input type="radio" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`).join("");
+            dynamicInputArea.innerHTML = `<div>${opts}</div><div class="inline-actions"><button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','radio')">Submit</button></div>`;
+            pendingInputMeta={type:"answer", variable:p.variable_name};
+            break;
+          }
+          case "ui_checkbox":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.question_text||""));
+            const opts=(p.options||[]).map((opt,i)=>`<label style="display:block;margin:4px 0;"><input type="checkbox" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`).join("");
+            dynamicInputArea.innerHTML = `<div>${opts}</div><div class="inline-actions"><button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','checkbox')">Submit</button></div>`;
+            pendingInputMeta={type:"answer", variable:p.variable_name};
+            break;
+          }
+          case "ui_slider":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.question_text||""));
+            const def=(typeof p.min==='number'&&typeof p.max==='number')?p.min:1;
+            dynamicInputArea.innerHTML = `
+              <input type="range" id="${p.variable_name}" min="${p.min}" max="${p.max}" value="${def}">
+              <div class="inline-actions">
+                <span id="${p.variable_name}_value" style="min-width:2ch">${def}</span>
+                <button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','slider')">Submit</button>
+              </div>`;
+            document.getElementById(p.variable_name).addEventListener('input',(e)=>{ document.getElementById(`${p.variable_name}_value`).textContent=e.target.value; });
+            pendingInputMeta={type:"answer", variable:p.variable_name};
+            break;
+          }
+          case "ui_rearrange_order":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.question_text||""));
+            const items=(p.items||[]).map((it,i)=>`<div class="rearrange-item" draggable="true" data-value="${it}" id="${p.variable_name}_item_${i}">${it}</div>`).join("");
+            dynamicInputArea.innerHTML = `
+              <div id="${p.variable_name}_container" class="rearrange-container drop-highlight">${items}</div>
+              <input type="hidden" id="${p.variable_name}_ordered_values" value="[]">
+              <div class="inline-actions"><button class="btn btn-gold" onclick="
+                const items=Array.from(document.querySelectorAll('#${p.variable_name}_container .rearrange-item')).map(i=>i.dataset.value);
+                document.getElementById('${p.variable_name}_ordered_values').value=JSON.stringify(items);
+                handleUserInput('${p.variable_name}','rearrange_order');">Submit Order</button></div>`;
+            const container=document.getElementById(`${p.variable_name}_container`);
+            let dragged=null;
+            container.addEventListener('dragstart',(e)=>{ const t=e.target; if(!t.classList.contains('rearrange-item')) return; dragged=t; dragged.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', t.dataset.value); });
+            container.addEventListener('dragover',(e)=>{ e.preventDefault(); const after=getAfter(container,e.clientY); if(after==null) container.appendChild(dragged); else container.insertBefore(dragged,after); });
+            container.addEventListener('drop',(e)=>{ e.preventDefault(); dragged&&dragged.classList.remove('dragging'); dragged=null; });
+            container.addEventListener('dragend',()=>{ dragged&&dragged.classList.remove('dragging'); dragged=null; });
+            function getAfter(container,y){ const els=[...container.querySelectorAll('.rearrange-item:not(.dragging)')]; return els.reduce((c,child)=>{ const box=child.getBoundingClientRect(); const off=y-box.top-box.height/2; return (off<0&&off>c.offset)?{offset:off,element:child}:c; },{offset:-Infinity}).element; }
+            pendingInputMeta={type:"answer", variable:p.variable_name};
+            break;
+          }
+          case "ui_drawing_board":{
+            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
+            typewriter(el, marked.parse(p.prompt_text||""));
+            dynamicInputArea.innerHTML = `
+              <canvas id="${p.variable_name}_canvas" width="320" height="180" style="background:#fff;border-radius:14px/10px;box-shadow: inset 0 0 0 2px rgba(185,155,100,.35)"></canvas>
+              <input type="hidden" id="${p.variable_name}_image_data" value="">
+              <div class="inline-actions"><button class="btn btn-gold" onclick="
+                const c=document.getElementById('${p.variable_name}_canvas');
+                const d=c.toDataURL('image/png');
+                document.getElementById('${p.variable_name}_image_data').value=d;
+                handleUserInput('${p.variable_name}','drawing_board');">Submit Drawing</button></div>`;
+            const canvas=document.getElementById(`${p.variable_name}_canvas`); const ctx=canvas.getContext('2d');
+            let isDrawing=false; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000';
+            const pos=(e)=>{ const r=canvas.getBoundingClientRect(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; return {x:x-r.left,y:y-r.top}; };
+            const start=(e)=>{ e.preventDefault(); isDrawing=true; ctx.beginPath(); const p2=pos(e); ctx.moveTo(p2.x,p2.y); };
+            const move=(e)=>{ if(!isDrawing) return; e.preventDefault(); const p2=pos(e); ctx.lineTo(p2.x,p2.y); ctx.stroke(); };
+            const end=()=>{ isDrawing=false; };
+            canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); canvas.addEventListener('mouseup',end); canvas.addEventListener('mouseout',end);
+            canvas.addEventListener('touchstart',start); canvas.addEventListener('touchmove',move); canvas.addEventListener('touchend',end); canvas.addEventListener('touchcancel',end);
+            pendingInputMeta={type:"answer", variable:p.variable_name};
+            break;
+          }
+          case "ui_button":{
+            const b=document.createElement('button'); b.className='btn btn-gold'; b.textContent=p.text||"Continue";
+            b.addEventListener('click', ()=> sendAction(p.next_command, p.next_command_parameters||{}));
+            dynamicInputArea.appendChild(b); break;
+          }
+          default:{
+            const e=document.createElement('div'); e.className='error-message'; e.textContent=`Unknown UI Command: ${action.command}`; chatContainer.appendChild(e);
+          }
         }
+        chatContainer.scrollTop=chatContainer.scrollHeight;
       }
 
-      function renderUICommand(action) {
-        const params = action.parameters || {};
-        switch (action.command) {
-          case "ui_display_notes":
-            chatContainer.innerHTML += `<div class="note">${marked.parse(
-              params.content || ""
-            )}</div>`;
-            break;
-          case "ui_short_answer":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text || ""
-            )}</div>`;
-            dynamicInputArea.innerHTML = `
-              <input type="text" id="${params.variable_name}" placeholder="${
-              params.placeholder || ""
-            }">
-              <button onclick="handleUserInput('${
-                params.variable_name
-              }', 'text')">Send</button>
-            `;
-            document.getElementById(params.variable_name)?.focus();
-            break;
-          case "ui_mcq":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text || ""
-            )}</div>`;
-            const mcqOptions = (params.options || [])
-              .map(
-                (opt, idx) =>
-                  `<label><input type="radio" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${idx}"> ${opt}</label><br>`
-              )
-              .join("");
-            dynamicInputArea.innerHTML = `
-              <div>${mcqOptions}</div>
-              <button onclick="handleUserInput('${params.variable_name}', 'radio')">Submit</button>
-            `;
-            break;
-          case "ui_checkbox":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text || ""
-            )}</div>`;
-            const cbxOptions = (params.options || [])
-              .map(
-                (opt, idx) =>
-                  `<label><input type="checkbox" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${idx}"> ${opt}</label><br>`
-              )
-              .join("");
-            dynamicInputArea.innerHTML = `
-              <div>${cbxOptions}</div>
-              <button onclick="handleUserInput('${params.variable_name}', 'checkbox')">Submit</button>
-            `;
-            break;
-          case "ui_slider":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text || ""
-            )}</div>`;
-            const defaultVal =
-              typeof params.min === "number" && typeof params.max === "number"
-                ? params.min
-                : 1;
-            dynamicInputArea.innerHTML = `
-              <input type="range" id="${params.variable_name}" min="${params.min}" max="${params.max}" value="${defaultVal}">
-              <div style="display:flex;justify-content:space-between;">
-                <span>${params.min}</span>
-                <span id="${params.variable_name}_value">${defaultVal}</span>
-                <span>${params.max}</span>
-              </div>
-              <button onclick="handleUserInput('${params.variable_name}', 'slider')">Submit</button>
-            `;
-            document
-              .getElementById(params.variable_name)
-              .addEventListener("input", (e) => {
-                document.getElementById(
-                  `${params.variable_name}_value`
-                ).textContent = e.target.value;
-              });
-            break;
-          case "ui_rearrange_order":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text || ""
-            )}</div>`;
-            const itemsHtml = (params.items || [])
-              .map(
-                (item, idx) =>
-                  `<div class="rearrange-item" draggable="true" data-value="${item}" id="${params.variable_name}_item_${idx}">${item}</div>`
-              )
-              .join("");
-            dynamicInputArea.innerHTML = `
-              <div id="${params.variable_name}_container" class="rearrange-container">
-                ${itemsHtml}
-              </div>
-              <input type="hidden" id="${params.variable_name}_ordered_values" value="[]">
-              <button onclick="
-                const items = Array.from(document.querySelectorAll('#${params.variable_name}_container .rearrange-item')).map(i=>i.dataset.value);
-                document.getElementById('${params.variable_name}_ordered_values').value = JSON.stringify(items);
-                handleUserInput('${params.variable_name}', 'rearrange_order');
-              ">Submit Order</button>
-            `;
-            const container = document.getElementById(
-              `${params.variable_name}_container`
-            );
-            let draggedItem = null;
-            container.addEventListener("dragstart", (e) => {
-              draggedItem = e.target;
-              if (draggedItem.classList.contains("rearrange-item")) {
-                setTimeout(() => draggedItem.classList.add("dragging"), 0);
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", draggedItem.dataset.value);
-              } else {
-                e.preventDefault();
-              }
-            });
-            container.addEventListener("dragover", (e) => {
-              e.preventDefault();
-              const target = e.target;
-              if (
-                target.classList.contains("rearrange-item") &&
-                target !== draggedItem
-              ) {
-                const rect = target.getBoundingClientRect();
-                const offset = rect.y + rect.height / 2;
-                if (e.clientY > offset) {
-                  container.insertBefore(draggedItem, target.nextSibling);
-                } else {
-                  container.insertBefore(draggedItem, target);
-                }
-              }
-            });
-            container.addEventListener("dragend", () => {
-              if (draggedItem) {
-                draggedItem.classList.remove("dragging");
-                draggedItem = null;
-              }
-            });
-            break;
-          case "ui_drawing_board":
-            chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.prompt_text || ""
-            )}</div>`;
-            dynamicInputArea.innerHTML = `
-              <canvas id="${params.variable_name}_canvas" width="320" height="180"></canvas>
-              <input type="hidden" id="${params.variable_name}_image_data" value="">
-              <button onclick="
-                const canvas = document.getElementById('${params.variable_name}_canvas');
-                const imageData = canvas.toDataURL('image/png');
-                document.getElementById('${params.variable_name}_image_data').value = imageData;
-                handleUserInput('${params.variable_name}', 'drawing_board');
-              ">Submit Drawing</button>
-            `;
-            const canvas = document.getElementById(
-              `${params.variable_name}_canvas`
-            );
-            const ctx = canvas.getContext("2d");
-            let isDrawing = false;
-            ctx.lineWidth = 2;
-            ctx.lineCap = "round";
-            ctx.strokeStyle = "#000";
-            const getPos = (e) => {
-              const rect = canvas.getBoundingClientRect();
-              const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-              const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-              return { x: clientX - rect.left, y: clientY - rect.top };
-            };
-            const start = (e) => {
-              e.preventDefault();
-              isDrawing = true;
-              ctx.beginPath();
-              const p = getPos(e);
-              ctx.moveTo(p.x, p.y);
-            };
-            const move = (e) => {
-              if (!isDrawing) return;
-              e.preventDefault();
-              const p = getPos(e);
-              ctx.lineTo(p.x, p.y);
-              ctx.stroke();
-            };
-            const end = () => {
-              isDrawing = false;
-            };
-            canvas.addEventListener("mousedown", start);
-            canvas.addEventListener("mousemove", move);
-            canvas.addEventListener("mouseup", end);
-            canvas.addEventListener("mouseout", end);
-            canvas.addEventListener("touchstart", start);
-            canvas.addEventListener("touchmove", move);
-            canvas.addEventListener("touchend", end);
-            canvas.addEventListener("touchcancel", end);
-            break;
-          case "ui_button":
-            const button = document.createElement("button");
-            button.textContent = params.text || "Continue";
-            button.addEventListener("click", () => {
-              sendActionToBackend(
-                params.next_command,
-                params.next_command_parameters || {}
-              );
-            });
-            dynamicInputArea.appendChild(button);
-            break;
-          default:
-            chatContainer.innerHTML += `<div class="error-message">Unknown UI Command: ${action.command}</div>`;
-        }
+      function attachMath(inputId){
+        const area=dynamicInputArea.querySelector('.math-keypad'); if(!area) return;
+        const input=document.getElementById(inputId);
+        area.addEventListener('click',(e)=>{
+          const btn=e.target.closest('button'); if(!btn||!btn.dataset.k) return;
+          const k=btn.dataset.k;
+          if(k==='clear') input.value='';
+          else if(k==='backspace') input.value=input.value.slice(0,-1);
+          else input.value += (k==='*' ? '*' : k);
+          input.focus();
+        });
+      }
+      function attachVoice(buttonId, inputId){
+        const micBtn=document.getElementById(buttonId); if(!micBtn) return;
+        const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+        if(!SR){ micBtn.disabled=true; micBtn.title="Speech not supported in this browser."; return; }
+        const rec=new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
+        micBtn.addEventListener('click', ()=>{ if(micBtn.classList.contains('active')){ rec.stop(); micBtn.classList.remove('active'); } else { rec.start(); micBtn.classList.add('active'); }});
+        rec.addEventListener('result',(e)=>{ const t=e.results[0][0].transcript||''; const input=document.getElementById(inputId); if(input) input.value=t; });
+        rec.addEventListener('end', ()=> micBtn.classList.remove('active'));
+        rec.addEventListener('error', ()=> micBtn.classList.remove('active'));
       }
 
-      function handleUserInput(variableName, inputType) {
+      // Local correctness check for Spellbook tests
+      function localCheckAndSend(variableName, value, inputType){
+        if(pendingInputMeta && pendingInputMeta.testQuestionId){
+          const q = TestRegistry.get(pendingInputMeta.testQuestionId);
+          if(q){
+            let correct=false;
+            if(q.type==='mcq' || q.type==='short'){ correct = (String(value).trim() === String(q.correct).trim()); }
+            else if(q.type==='checkbox'){ const ans = Array.isArray(value)? value.map(x=>String(x).trim()).sort().join(',') : String(value); const gt = Array.isArray(q.correct)? q.correct.map(x=>String(x).trim()).sort().join(',') : String(q.correct); correct = (ans===gt); }
+            else if(q.type==='rearrange'){ correct = JSON.stringify(value) === JSON.stringify(q.correct); }
+            // Send evaluate_answer with expected fields so backend/LLM behaves normally
+            const nextParams = { user_answer: value, question_id: q.variable_name, test_correct: correct, test_concept: q.concept };
+            sendAction('evaluate_answer', nextParams);
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function handleUserInput(variableName, inputType){
         let value;
-        if (inputType === "text") {
-          value = document.getElementById(variableName).value;
-          if (!value.trim()) {
-            alert("Please enter something.");
-            return;
-          }
-        } else if (inputType === "radio") {
-          const selected = document.querySelector(
-            `input[name="${variableName}"]:checked`
-          );
-          if (!selected) {
-            alert("Please select an option.");
-            return;
-          }
-          value = selected.value;
-        } else if (inputType === "checkbox") {
-          const selected = document.querySelectorAll(
-            `input[name="${variableName}"]:checked`
-          );
-          if (!selected.length) {
-            alert("Please select at least one option.");
-            return;
-          }
-          value = Array.from(selected).map((cb) => cb.value);
-        } else if (inputType === "slider") {
-          value = document.getElementById(variableName).value;
-        } else if (inputType === "rearrange_order") {
-          const hidden = document.getElementById(
-            `${variableName}_ordered_values`
-          );
-          if (!hidden || !hidden.value || hidden.value === "[]") {
-            alert("Please arrange the items.");
-            return;
-          }
-          try {
-            value = JSON.parse(hidden.value);
-          } catch {
-            alert("Could not process rearrangement.");
-            return;
-          }
-        } else if (inputType === "drawing_board") {
-          const hidden = document.getElementById(`${variableName}_image_data`);
-          if (!hidden || !hidden.value.trim()) {
-            alert("Please draw something.");
-            return;
-          }
-          value = hidden.value;
-        }
+        if(inputType==="text"){ value=document.getElementById(variableName).value; if(!value.trim()){ alert("Please enter something."); return; } }
+        else if(inputType==="radio"){ const sel=document.querySelector(`input[name="${variableName}"]:checked`); if(!sel){ alert("Please select an option."); return; } value=sel.value; }
+        else if(inputType==="checkbox"){ const sel=document.querySelectorAll(`input[name="${variableName}"]:checked`); if(!sel.length){ alert("Please select at least one option."); return; } value=Array.from(sel).map(cb=>cb.value); }
+        else if(inputType==="slider"){ value=document.getElementById(variableName).value; }
+        else if(inputType==="rearrange_order"){ const hid=document.getElementById(`${variableName}_ordered_values`); if(!hid||!hid.value||hid.value==='[]'){ alert("Please arrange the items."); return; } try{ value=JSON.parse(hid.value);}catch{ alert("Could not process rearrangement."); return; } }
+        else if(inputType==="drawing_board"){ const hid=document.getElementById(`${variableName}_image_data`); if(!hid||!hid.value.trim()){ alert("Please draw something."); return; } value=hid.value; }
 
-        let nextCommand;
-        let nextParams = {};
+        // First: local test registry path (Spellbook)
+        if (localCheckAndSend(variableName, value, inputType)) return;
 
-        if (variableName === "topic_query") {
-          nextCommand = "generate_course_plan";
-          nextParams.query = value;
-        } else if (variableName === "initial_paraphrase") {
-          nextCommand = "evaluate_paraphrase";
-          nextParams.user_input = value;
-        } else if (variableName === "final_summary") {
-          nextCommand = "evaluate_summary";
-          nextParams.user_input = value;
-        } else if (
-          variableName.startsWith("q_lesson") ||
-          variableName.startsWith("q_checkpoint_")
-        ) {
-          nextCommand = "evaluate_answer";
-          nextParams.user_answer = value;
-          nextParams.question_id = variableName;
-        } else if (variableName === "user_feedback_input") {
-          nextCommand = "process_feedback";
-          nextParams.feedback = value;
+        // Normal routing with pending meta
+        let nextCommand, nextParams={};
+        if (pendingInputMeta && pendingInputMeta.variable === variableName) {
+          if (pendingInputMeta.type === "paraphrase") { nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
+          else if (pendingInputMeta.type === "summary") { nextCommand="evaluate_summary"; nextParams.user_input=value; }
+          else if (pendingInputMeta.type === "feedback") { nextCommand="process_feedback"; nextParams.feedback=value; }
+          else { nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName; }
         } else {
-          nextCommand = "handle_user_question";
-          nextParams.user_question_value = value;
-          nextParams.input_variable_name = variableName;
-          nextParams.input_type = inputType;
+          if (variableName === "topic_query") { nextCommand="generate_course_plan"; nextParams.query=value; }
+          else if (variableName === "initial_paraphrase") { nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
+          else if (variableName === "final_summary") { nextCommand="evaluate_summary"; nextParams.user_input=value; }
+          else if (variableName.startsWith("q_lesson") || variableName.startsWith("q_checkpoint_")) { nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName; }
+          else if (variableName === "user_feedback_input") { nextCommand="process_feedback"; nextParams.feedback=value; }
+          else { nextCommand="handle_user_question"; nextParams.user_question_value=value; nextParams.input_variable_name=variableName; nextParams.input_type=inputType; }
         }
-
-        sendActionToBackend(nextCommand, nextParams);
+        sendAction(nextCommand, nextParams);
       }
 
-      window.onload = () => {
-        const userName =
-          prompt("Welcome! What's your name, learner?") || "Learner";
-        sendActionToBackend("init", { user_name: userName });
-        setupPersistentButtons();
-        updateProgressBar(currentStatus.current_lesson_progress);
-        updatePersistentButtons();
+      // Spellbook: spawn UIs and register expected answers so tests can pass correctly
+      spellbook.addEventListener('click', (e)=>{
+        const b=e.target.closest('button[data-spell]'); if(!b) return;
+        const s=b.dataset.spell;
+        const fake=(cmd, params)=> renderAction({ command: cmd, parameters: params||{} });
+
+        if (s==='notes') {
+          fake("ui_display_notes",{ content:"### Ancient Note\nInk bleeds softly into the parchment fibers. The map hums with quiet magic."});
+        }
+        if (s==='short') {
+          const id="spell_short1";
+          TestRegistry.add({ id, type:"short", variable_name:id, correct:"Gravity pulls objects toward Earth", concept:"ConceptRecall" });
+          fake("ui_short_answer",{ question_text:"In one sentence, what is gravity?", variable_name:id, placeholder:"Your sentence..." });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='short-math') {
+          const id="spell_short_math1";
+          TestRegistry.add({ id, type:"short", variable_name:id, correct:"3", concept:"SolveLinear" });
+          fake("ui_short_answer",{ question_text:"Solve 3x + 2 = 11 (use keypad)", variable_name:id, placeholder:"x = ...", hints:{ math_input:true }});
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='mcq') {
+          const id="spell_mcq1";
+          TestRegistry.add({ id, type:"mcq", variable_name:id, correct:"17", concept:"PrimeNumbers" });
+          fake("ui_mcq",{ question_text:"Which is prime?", options:["12","15","17"], variable_name:id });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='checkbox') {
+          const id="spell_cbx1";
+          TestRegistry.add({ id, type:"checkbox", variable_name:id, correct:["2","6"], concept:"EvenNumbers" });
+          fake("ui_checkbox",{ question_text:"Select all even numbers:", options:["2","3","6","9"], variable_name:id });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='slider') {
+          const id="spell_slider1";
+          TestRegistry.add({ id, type:"short", variable_name:id, correct:"10", concept:"MetaFeedback" });
+          fake("ui_slider",{ question_text:"Set slider to 10 to pass this test.", min:1, max:10, variable_name:id });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='rearrange') {
+          const id="spell_rearr1";
+          TestRegistry.add({ id, type:"rearrange", variable_name:id, correct:["2","4","7","9"], concept:"Ordering" });
+          fake("ui_rearrange_order",{ question_text:"Put in ascending order:", items:["7","2","9","4"], variable_name:id });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+        if (s==='draw') {
+          const id="spell_draw1";
+          TestRegistry.add({ id, type:"short", variable_name:id, correct:"[image]", concept:"Sketch" });
+          fake("ui_drawing_board",{ prompt_text:"Sketch a right triangle.", variable_name:id });
+          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
+        }
+      });
+
+      // Init
+      window.onload = ()=>{
+        const userName = prompt("Welcome! What's your name, learner?") || "Learner";
+        sendAction("init", { user_name: userName });
+        updateProgress(currentStatus.current_lesson_progress);
+        updateToolbar();
       };
     </script>
   </body>
