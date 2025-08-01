@@ -21,9 +21,9 @@ INITIAL_STATUS_DICT = {
     "effort_focus": 10,
     "weak_concept_spot": {},
     "current_lesson_progress": 0,
-    "current_lesson_title": "",
-    "current_lesson_concepts": [],
-    "lesson_step_tracker": ""
+    "current_lesson_stage": "initial", # New: Default initial stage
+    "current_lesson_title": "", # New: To track current lesson title
+    "active_question_id": "" # New: To track the ID of the last question asked
 }
 
 @app.route('/')
@@ -93,9 +93,10 @@ def ask():
     logging.info(f"[{session_id}] - Current Status Dictionary (before tutor call): {current_status_dictionary}")
 
     # Call tutor.py. It will return the LLM's full JSON response and the updated message history.
+    # The LLM receives the current_status_dictionary in the user_action payload
     llm_response_json, updated_messages_history = ask_tutor(
         user_action, 
-        current_status_dictionary, # Pass the current status dict
+        current_status_dictionary, # Pass the current status dict (which includes lesson_stage)
         current_messages_history
     )
 
@@ -104,30 +105,33 @@ def ask():
         logging.error(f"[{session_id}] - Error from ask_tutor: {llm_response_json['error']}")
         return jsonify({"actions": [
             {"command": "ui_display_notes", "parameters": {"content": f"Oops! Mr. Delight seems a bit stuck. Error: {llm_response_json['error']}"}}
-        ]}), 500
+        ], "current_status": current_status_dictionary}), 500 # Ensure status is sent even on error
     
     # Update the session's message history in our global store
     current_session["messages"] = updated_messages_history
     logging.info(f"[{session_id}] - Messages history updated. New length: {len(current_session['messages'])}")
 
-    # --- Process and Apply Status Updates ---
+    # --- Process and Apply Status Updates from LLM's response ---
     final_actions_for_client = []
     
     for action in llm_response_json.get("actions", []):
         if action.get("command") == "update_status":
             updates = action.get("parameters", {}).get("updates", {})
             logging.info(f"[{session_id}] - Applying status updates: {updates}")
-            for key, value_str in updates.items():
+            for key, value in updates.items(): # Changed value_str to value for clarity
                 try:
                     # Handle relative updates (e.g., "+1", "-0.5")
-                    if isinstance(value_str, str) and (value_str.startswith('+') or value_str.startswith('-')):
-                        delta = float(value_str)
+                    if isinstance(value, str) and (value.startswith('+') or value.startswith('-')):
+                        delta = float(value)
                         if '.' in key: # Handle nested keys like weak_concept_spot.Photosynthesis
                             parts = key.split('.')
                             temp_dict = current_status_dictionary
                             for i, part in enumerate(parts):
                                 if i == len(parts) - 1:
-                                    temp_dict[part] = temp_dict.get(part, 0.0) + delta
+                                    # Ensure the nested dict exists for accumulation
+                                    if part not in temp_dict:
+                                        temp_dict[part] = 0.0 # Initialize if not exists
+                                    temp_dict[part] = temp_dict[part] + delta
                                 else:
                                     temp_dict = temp_dict.setdefault(part, {})
                         else:
@@ -136,7 +140,8 @@ def ask():
                         # Handle direct assignments (numbers, strings, booleans, objects like {})
                         # Try to parse as JSON for objects/arrays/numbers if they aren't simple strings
                         try:
-                            val = json.loads(value_str) if isinstance(value_str, str) and (value_str.startswith('{') or value_str.startswith('[')) else value_str
+                            # Only attempt JSON load if it looks like a JSON string
+                            val = json.loads(value) if isinstance(value, str) and (value.startswith('{') or value.startswith('[')) else value
                             if '.' in key: # Handle nested keys
                                 parts = key.split('.')
                                 temp_dict = current_status_dictionary
@@ -148,7 +153,7 @@ def ask():
                             else:
                                 current_status_dictionary[key] = val
                         except json.JSONDecodeError:
-                            current_status_dictionary[key] = value_str # Keep as string if not JSON parsable
+                            current_status_dictionary[key] = value # Keep as string if not JSON parsable
 
                 except Exception as e:
                     logging.error(f"[{session_id}] - Error applying status update for key '{key}': {e}")
@@ -158,8 +163,8 @@ def ask():
     
     logging.info(f"[{session_id}] - Status Dictionary after updates: {current_status_dictionary}")
     
-    # Return the remaining UI actions to the client
-    return jsonify({"actions": final_actions_for_client})
+    # Return the remaining UI actions to the client, along with the *current* status for frontend rendering
+    return jsonify({"actions": final_actions_for_client, "current_status": current_status_dictionary})
 
 if __name__ == '__main__':
     app.run(debug=True)
