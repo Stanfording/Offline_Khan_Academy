@@ -5,126 +5,228 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Magic Notebook</title>
     <style>
+      :root {
+        --paper-bg: #faf7f2;
+        --ink: #2c2a27;
+        --accent: #00bcd4;
+        --note-bg: #fffdf7;
+        --question-bg: #fffbe9;
+        --paper-line: rgba(0, 0, 0, 0.06);
+      }
       body {
-        font-family: sans-serif;
-        margin: 20px;
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 40px); /* Adjust for margin */
+        font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background: linear-gradient(
+            180deg,
+            rgba(250, 247, 242, 1) 0%,
+            rgba(250, 247, 242, 0.6) 100%
+          ),
+          repeating-linear-gradient(
+            #faf7f2,
+            #faf7f2 28px,
+            #f2ece4 29px,
+            #faf7f2 30px
+          );
+      }
+      .page-wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px 20px 40px;
       }
       h1 {
         text-align: center;
-        color: #333;
+        color: var(--ink);
+        letter-spacing: 0.3px;
+        margin: 8px 0 16px;
+        font-weight: 800;
       }
-      .progress-container {
-        width: 100%;
-        background-color: #f0f0f0;
-        border-radius: 5px;
-        margin-bottom: 10px;
+      .notebook {
+        background: var(--note-bg);
+        border-radius: 12px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08),
+          0 2px 6px rgba(0, 0, 0, 0.06);
+        border: 1px solid #eee3d4;
         overflow: hidden;
       }
+      .notebook-header {
+        padding: 12px 16px;
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.9),
+            rgba(255, 255, 255, 0.7)
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 24px,
+            rgba(0, 0, 0, 0.05) 25px,
+            transparent 26px
+          );
+        border-bottom: 1px solid #eee3d4;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .spiral {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #c0a98e;
+        box-shadow: inset 0 0 0 2px #fff;
+      }
+      .progress-container {
+        flex: 1;
+        background-color: #f2ece4;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e6d9c7;
+      }
       .progress-bar {
-        height: 20px;
+        height: 16px;
         width: 0%;
-        background-color: #4caf50;
-        text-align: center;
+        background: linear-gradient(90deg, #2ecc71, #00bcd4);
+        text-align: right;
         color: white;
-        line-height: 20px;
-        border-radius: 5px;
+        font-size: 11px;
+        line-height: 16px;
+        padding-right: 6px;
         transition: width 0.5s ease-in-out;
       }
+      .content {
+        display: grid;
+        grid-template-rows: auto 1fr auto auto;
+      }
       .chat-container {
-        border: 1px solid #ccc;
-        padding: 10px;
-        flex-grow: 1; /* Allows it to take up available space */
-        overflow-y: scroll;
-        margin-bottom: 10px;
-        background-color: #f9f9f9;
-        display: flex;
-        flex-direction: column; /* Stack messages */
+        padding: 16px;
+        height: 58vh;
+        overflow-y: auto;
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.7),
+            rgba(255, 255, 255, 0.6)
+          ),
+          repeating-linear-gradient(
+            #fffdf7,
+            #fffdf7 28px,
+            var(--paper-line) 29px,
+            #fffdf7 30px
+          );
+      }
+      .note {
+        background-color: #ffffff;
+        padding: 12px 14px;
+        margin: 10px 0;
+        border-left: 5px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        animation: inkReveal 0.4s ease-in;
+      }
+      .question {
+        background-color: var(--question-bg);
+        padding: 12px 14px;
+        margin: 10px 0;
+        border-left: 5px solid #ffc107;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        animation: inkReveal 0.4s ease-in;
+      }
+      @keyframes inkReveal {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
       .input-area {
         display: flex;
-        gap: 5px;
-        flex-wrap: wrap; /* Allow elements to wrap */
-        margin-bottom: 10px; /* Space above persistent buttons */
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        border-top: 1px dashed #e6d9c7;
+        background: #fffaf0;
       }
       .persistent-buttons-area {
         display: flex;
         gap: 10px;
-        padding: 10px 0;
-        border-top: 1px solid #eee;
+        padding: 12px 16px;
+        border-top: 1px solid #eee3d4;
         justify-content: center;
+        background: #fffdf7;
       }
       .raw-json-output {
-        background-color: #eee;
+        background-color: #fffaf5;
         padding: 10px;
-        border: 1px dashed #999;
+        border-top: 1px dashed #e0d2be;
         white-space: pre-wrap;
-        font-family: monospace;
-        margin-top: 10px;
-        flex-shrink: 0; /* Don't let it shrink */
-        overflow: auto; /* Allow scrolling if content is too large */
-        max-height: 150px; /* Limit height */
-      }
-      .note {
-        background-color: #e0f7fa;
-        padding: 10px;
-        margin-bottom: 5px;
-        border-left: 5px solid #00bcd4;
-      }
-      .question {
-        background-color: #fffde7;
-        padding: 10px;
-        margin-bottom: 5px;
-        border-left: 5px solid #ffeb3b;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        max-height: 150px;
+        overflow: auto;
+        color: #5a554d;
       }
       .user-message {
-          text-align: right;
-          background-color: #e7ffe7;
-          padding: 5px;
-          margin: 5px 0;
-          border-right: 3px solid #00c853;
+        text-align: right;
+        background-color: #e9fff0;
+        padding: 6px 8px;
+        margin: 8px 0;
+        border-right: 3px solid #2ecc71;
+        border-radius: 6px;
       }
       .error-message {
-          color: red;
-          font-weight: bold;
-          background-color: #ffe0e0;
-          padding: 5px;
-          margin: 5px 0;
-          border-left: 3px solid red;
+        color: #b00020;
+        font-weight: 600;
+        background-color: #ffe8e8;
+        padding: 6px;
+        border-left: 3px solid #b00020;
+        border-radius: 6px;
+        margin: 8px 0;
       }
       button {
-        padding: 8px 15px;
+        padding: 8px 14px;
         cursor: pointer;
-        border: 1px solid #ccc;
-        background-color: #f0f0f0;
-        border-radius: 4px;
+        border: 1px solid #e0d2be;
+        background-color: #fff;
+        border-radius: 8px;
+        color: var(--ink);
+        transition: transform 0.05s ease, box-shadow 0.2s ease,
+          background 0.2s ease;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
       }
       button:hover {
-        background-color: #e0e0e0;
+        background-color: #fff6e9;
+      }
+      button:active {
+        transform: translateY(1px);
       }
       input[type="text"] {
         flex-grow: 1;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 10px 12px;
+        border: 1px solid #e0d2be;
+        border-radius: 8px;
+        background: #fffdf9;
       }
-      /* Styles for new UI types */
       .rearrange-container {
-        border: 1px dashed #ccc;
+        border: 1px dashed #d9ccb8;
         padding: 10px;
         min-height: 50px;
         background-color: #fff;
         display: flex;
-        flex-direction: column; /* Items stack vertically */
+        flex-direction: column;
         gap: 5px;
-        width: 100%; /* Take full width */
+        width: 100%;
+        border-radius: 8px;
       }
       .rearrange-item {
-        background-color: #e6e6fa;
+        background-color: #f3f0ff;
         padding: 8px;
         border: 1px solid #c3c3e6;
+        border-radius: 6px;
         cursor: grab;
         user-select: none;
       }
@@ -132,362 +234,400 @@
         opacity: 0.5;
       }
       canvas {
-        touch-action: none; /* Prevent scrolling on touch devices */
+        touch-action: none;
         background-color: #fff;
-        border: 1px solid #000;
-        max-width: 100%; /* Responsive canvas */
+        border: 1px solid #d3c8b8;
+        max-width: 100%;
         height: auto;
+        border-radius: 8px;
       }
       input[type="range"] {
-          width: 100%;
-          margin: 10px 0;
+        width: 100%;
+        margin: 10px 0;
       }
-      input[type="radio"], input[type="checkbox"] {
-          margin-right: 5px;
+      input[type="radio"],
+      input[type="checkbox"] {
+        margin-right: 5px;
       }
       label {
-          margin-bottom: 5px;
+        margin-bottom: 5px;
+        display: inline-block;
+      }
+      .toolbar-label {
+        font-weight: 700;
+        font-size: 14px;
+        margin-right: 6px;
       }
     </style>
-    <!-- IMPORTANT: Add the marked.js CDN script here, or just before your custom script -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
-    <h1>The Magic Notebook ✨</h1>
+    <div class="page-wrap">
+      <h1>The Magic Notebook ✨</h1>
 
-    <div class="progress-container">
-        <div class="progress-bar" id="lessonProgressBar">0%</div>
+      <div class="notebook">
+        <div class="notebook-header">
+          <div class="spiral"></div>
+          <div class="toolbar-label">Lesson Progress</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="lessonProgressBar">0%</div>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="chat-container" id="chatContainer"></div>
+          <div id="dynamicInputArea" class="input-area"></div>
+          <div id="persistentButtonsArea" class="persistent-buttons-area"></div>
+          <div class="raw-json-output">
+            <strong>Raw LLM Response (debug):</strong>
+            <pre id="rawOutput"></pre>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="chat-container" id="chatContainer">
-      <!-- Messages and UI will be rendered here -->
-    </div>
-
-    <div id="dynamicInputArea" class="input-area">
-      <!-- Dynamic input elements will appear here -->
-    </div>
-
-    <div id="persistentButtonsArea" class="persistent-buttons-area">
-        <!-- Persistent buttons will be rendered here by JS -->
-    </div>
-
-    <div class="raw-json-output">
-      <h3>Raw LLM Response (for debug):</h3>
-      <pre id="rawOutput"></pre>
-    </div>
-
-    <!-- Your custom JavaScript code MUST be within <script> tags like this -->
     <script>
       const sessionId = "{{ session_id }}";
       const chatContainer = document.getElementById("chatContainer");
       const dynamicInputArea = document.getElementById("dynamicInputArea");
       const rawOutputDiv = document.getElementById("rawOutput");
       const lessonProgressBar = document.getElementById("lessonProgressBar");
-      const persistentButtonsArea = document.getElementById("persistentButtonsArea");
+      const persistentButtonsArea = document.getElementById(
+        "persistentButtonsArea"
+      );
 
-      // Global state variables for frontend UI - will be synced with backend
       let currentStatus = {
-          learning_confidence: 5,
-          learning_interest: 5,
-          learning_patience: 5,
-          effort_focus: 10,
-          weak_concept_spot: {},
-          current_lesson_progress: 0,
-          current_lesson_stage: "initial",
-          current_lesson_title: "",
-          active_question_id: ""
-      }; // Initial state, will be overwritten by first backend response
+        learning_confidence: 5,
+        learning_interest: 5,
+        learning_patience: 5,
+        effort_focus: 10,
+        weak_concept_spot: {},
+        current_lesson_progress: 0,
+        lesson_stage: "not_in_lesson",
+        current_lesson_title: "",
+        active_question_id: "",
+      };
 
-      // Function to update the progress bar's visual state
       function updateProgressBar(progress) {
-        progress = Math.max(0, Math.min(100, progress)); // Clamp between 0 and 100
+        progress = Math.max(0, Math.min(100, progress || 0));
         lessonProgressBar.style.width = `${progress}%`;
         lessonProgressBar.textContent = `${Math.round(progress)}%`;
       }
 
-      // Function to setup (create) persistent buttons. Called once on page load.
       function setupPersistentButtons() {
-          persistentButtonsArea.innerHTML = `
-              <button id="btnFeedback">Give Feedback</button>
-              <button id="btnNextLesson">Next Lesson</button>
-              <button id="btnSkipPractice">Skip Practice</button>
-              <button id="btnRevealStatus">Reveal My Status</button>
-          `;
-
-          // Attach event listeners to persistent buttons
-          document.getElementById('btnFeedback').addEventListener('click', () => {
-              sendActionToBackend('give_feedback', {});
+        persistentButtonsArea.innerHTML = `
+          <button id="btnFeedback">Give Feedback</button>
+          <button id="btnNextLesson">Next Lesson</button>
+          <button id="btnSkipPractice">Skip Practice</button>
+          <button id="btnRevealStatus">Reveal My Status</button>
+        `;
+        document.getElementById("btnFeedback").addEventListener("click", () => {
+          // Triggers LLM to ask feedback question UI
+          sendActionToBackend("give_feedback", {});
+        });
+        document
+          .getElementById("btnNextLesson")
+          .addEventListener("click", () => {
+            // Ask LLM to start next lesson (engine should interpret 'next')
+            sendActionToBackend("start_lesson", { lesson_index: "next" });
           });
-          document.getElementById('btnNextLesson').addEventListener('click', () => {
-              sendActionToBackend('next_lesson', {});
+        document
+          .getElementById("btnSkipPractice")
+          .addEventListener("click", () => {
+            sendActionToBackend("skip_practice", {});
           });
-          document.getElementById('btnSkipPractice').addEventListener('click', () => {
-              sendActionToBackend('skip_practice', {});
+        document
+          .getElementById("btnRevealStatus")
+          .addEventListener("click", () => {
+            // Frontend/back-end handle this directly (no LLM needed)
+            renderStatusSnapshot();
           });
-          document.getElementById('btnRevealStatus').addEventListener('click', () => {
-              sendActionToBackend('reveal_status', {});
-          });
-
-          // Call updatePersistentButtons to set initial state (e.g., enable/disable)
-          updatePersistentButtons();
+        updatePersistentButtons();
       }
 
-      // Function to update (enable/disable/hide) persistent buttons based on current state
       function updatePersistentButtons() {
-          const stage = currentStatus.current_lesson_stage;
-          const progress = currentStatus.current_lesson_progress;
+        const stage = currentStatus.lesson_stage;
+        const progress = currentStatus.current_lesson_progress;
 
-          const btnFeedback = document.getElementById('btnFeedback');
-          const btnNextLesson = document.getElementById('btnNextLesson');
-          const btnSkipPractice = document.getElementById('btnSkipPractice');
-          const btnRevealStatus = document.getElementById('btnRevealStatus');
+        const btnFeedback = document.getElementById("btnFeedback");
+        const btnNextLesson = document.getElementById("btnNextLesson");
+        const btnSkipPractice = document.getElementById("btnSkipPractice");
+        const btnRevealStatus = document.getElementById("btnRevealStatus");
 
-          if (btnFeedback) btnFeedback.disabled = false; // Always enabled
-          if (btnRevealStatus) btnRevealStatus.disabled = false; // Always enabled
+        if (btnFeedback) btnFeedback.disabled = false;
+        if (btnRevealStatus) btnRevealStatus.disabled = false;
 
-          // Next Lesson button: Enabled if lesson is mostly complete or if stage is 'lesson_complete'
-          if (btnNextLesson) {
-              btnNextLesson.disabled = !(stage === 'lesson_complete' || progress >= 95);
-              // Only show after course plan is generated
-              btnNextLesson.style.display = (stage && stage !== 'initial' && stage !== 'topic_selection') ? 'inline-block' : 'none';
-          }
-          // Skip Practice button: Only enabled/visible during 'practice' or 'summary_check' stage
-          if (btnSkipPractice) {
-              btnSkipPractice.style.display = (stage === 'practice' || stage === 'summary_check') ? 'inline-block' : 'none';
-          }
+        if (btnNextLesson) {
+          btnNextLesson.disabled = !(
+            stage === "lesson_complete" || progress >= 95
+          );
+          btnNextLesson.style.display =
+            stage && stage !== "not_in_lesson" ? "inline-block" : "none";
+        }
+
+        if (btnSkipPractice) {
+          btnSkipPractice.style.display =
+            stage === "practice" ? "inline-block" : "none";
+        }
+      }
+
+      function renderStatusSnapshot() {
+        const s = currentStatus;
+        const content = `
+          <div><strong>Confidence:</strong> ${s.learning_confidence}/10</div>
+          <div><strong>Interest:</strong> ${s.learning_interest}/10</div>
+          <div><strong>Patience:</strong> ${s.learning_patience}/10</div>
+          <div><strong>Focus:</strong> ${s.effort_focus}/10</div>
+          <div><strong>Stage:</strong> ${s.lesson_stage}</div>
+          <div><strong>Progress:</strong> ${s.current_lesson_progress}%</div>
+        `;
+        chatContainer.innerHTML += `<div class="note">${content}</div>`;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
       }
 
       async function sendActionToBackend(command, parameters = {}) {
         const payload = {
           session_id: sessionId,
-          user_action: {
-            command: command,
-            parameters: parameters,
-          },
+          user_action: { command, parameters },
         };
 
-        chatContainer.innerHTML += `<div class="user-message"><strong>You:</strong> Command '${command}' with params ${JSON.stringify(
-          parameters
-        )}</div>`;
+        chatContainer.innerHTML += `<div class="user-message"><strong>You:</strong> ${command} ${
+          Object.keys(parameters).length ? JSON.stringify(parameters) : ""
+        }</div>`;
 
         try {
           const response = await fetch("/ask", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
           const data = await response.json();
-          rawOutputDiv.textContent = JSON.stringify(data, null, 2); // Display raw JSON for debug
+          rawOutputDiv.textContent = JSON.stringify(data, null, 2);
 
-          // Clear previous dynamic input area AFTER response is received
-          dynamicInputArea.innerHTML = ""; 
+          dynamicInputArea.innerHTML = "";
 
-          // --- IMPORTANT: Update currentStatus with the latest from the backend ---
           if (data.current_status) {
-              currentStatus = data.current_status;
-              updateProgressBar(currentStatus.current_lesson_progress || 0);
-              updatePersistentButtons();
+            currentStatus = data.current_status;
+            updateProgressBar(currentStatus.current_lesson_progress || 0);
+            updatePersistentButtons();
           }
 
-          // Process and render UI commands
           if (data.actions && Array.isArray(data.actions)) {
             for (const action of data.actions) {
               renderUICommand(action);
             }
           } else {
-            chatContainer.innerHTML += `<div class="error-message">Error: Invalid response format from AI.</div>`;
+            chatContainer.innerHTML += `<div class="error-message">Invalid AI response format.</div>`;
           }
-        } catch (error) {
-          console.error("Error sending action to backend:", error);
-          chatContainer.innerHTML += `<div class="error-message">Error communicating with AI: ${error.message}</div>`;
+        } catch (err) {
+          console.error("Error:", err);
+          chatContainer.innerHTML += `<div class="error-message">Error communicating with AI: ${err.message}</div>`;
         } finally {
-          chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to bottom
+          chatContainer.scrollTop = chatContainer.scrollHeight;
         }
       }
 
       function renderUICommand(action) {
-        const params = action.parameters;
+        const params = action.parameters || {};
         switch (action.command) {
           case "ui_display_notes":
-            // Marked.parse will display LLM's Jinja-like templating for status_dictionary literally.
-            // For a production app, you might preprocess params.content on the backend or frontend
-            // to substitute actual values from `currentStatus` before calling marked.parse.
             chatContainer.innerHTML += `<div class="note">${marked.parse(
-              params.content
+              params.content || ""
             )}</div>`;
             break;
           case "ui_short_answer":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text
+              params.question_text || ""
             )}</div>`;
             dynamicInputArea.innerHTML = `
-                        <input type="text" id="${
-                          params.variable_name
-                        }" placeholder="${params.placeholder || ""}">
-                        <button onclick="handleUserInput('${
-                          params.variable_name
-                        }', 'text')">Send</button>
-                    `;
-            document.getElementById(params.variable_name).focus();
+              <input type="text" id="${params.variable_name}" placeholder="${
+              params.placeholder || ""
+            }">
+              <button onclick="handleUserInput('${
+                params.variable_name
+              }', 'text')">Send</button>
+            `;
+            document.getElementById(params.variable_name)?.focus();
             break;
           case "ui_mcq":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text
+              params.question_text || ""
             )}</div>`;
-            let optionsHtml = params.options
+            const mcqOptions = (params.options || [])
               .map(
-                (opt, index) => `
-                        <label><input type="radio" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${index}"> ${opt}</label><br>
-                    `
+                (opt, idx) =>
+                  `<label><input type="radio" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${idx}"> ${opt}</label><br>`
               )
               .join("");
             dynamicInputArea.innerHTML = `
-                        <div>${optionsHtml}</div>
-                        <button onclick="handleUserInput('${params.variable_name}', 'radio')">Submit</button>
-                    `;
+              <div>${mcqOptions}</div>
+              <button onclick="handleUserInput('${params.variable_name}', 'radio')">Submit</button>
+            `;
             break;
-          case "ui_button":
-            const button = document.createElement('button');
-            button.textContent = params.text;
-            button.addEventListener('click', () => {
-              sendActionToBackend(params.next_command, params.next_command_parameters || {});
-            });
-            dynamicInputArea.appendChild(button);
-            break;
-          case "ui_checkbox": 
+          case "ui_checkbox":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text
+              params.question_text || ""
             )}</div>`;
-            let checkboxOptionsHtml = params.options
+            const cbxOptions = (params.options || [])
               .map(
-                (opt, index) => `
-                        <label><input type="checkbox" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${index}"> ${opt}</label><br>
-                    `
+                (opt, idx) =>
+                  `<label><input type="checkbox" name="${params.variable_name}" value="${opt}" id="${params.variable_name}_${idx}"> ${opt}</label><br>`
               )
               .join("");
             dynamicInputArea.innerHTML = `
-                        <div>${checkboxOptionsHtml}</div>
-                        <button onclick="handleUserInput('${params.variable_name}', 'checkbox')">Submit</button>
-                    `;
+              <div>${cbxOptions}</div>
+              <button onclick="handleUserInput('${params.variable_name}', 'checkbox')">Submit</button>
+            `;
             break;
           case "ui_slider":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text
+              params.question_text || ""
             )}</div>`;
+            const defaultVal =
+              typeof params.min === "number" && typeof params.max === "number"
+                ? params.min
+                : 1;
             dynamicInputArea.innerHTML = `
-                        <input type="range" id="${params.variable_name}" min="${params.min}" max="${params.max}" value="${params.min || Math.floor((params.min + params.max) / 2)}" style="width: 100%;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>${params.min}</span>
-                            <span id="${params.variable_name}_value">${params.min || Math.floor((params.min + params.max) / 2)}</span>
-                            <span>${params.max}</span>
-                        </div>
-                        <button onclick="handleUserInput('${params.variable_name}', 'slider')">Submit</button>
-                    `;
-            document.getElementById(params.variable_name).addEventListener('input', (event) => {
-                document.getElementById(`${params.variable_name}_value`).textContent = event.target.value;
-            });
+              <input type="range" id="${params.variable_name}" min="${params.min}" max="${params.max}" value="${defaultVal}">
+              <div style="display:flex;justify-content:space-between;">
+                <span>${params.min}</span>
+                <span id="${params.variable_name}_value">${defaultVal}</span>
+                <span>${params.max}</span>
+              </div>
+              <button onclick="handleUserInput('${params.variable_name}', 'slider')">Submit</button>
+            `;
+            document
+              .getElementById(params.variable_name)
+              .addEventListener("input", (e) => {
+                document.getElementById(
+                  `${params.variable_name}_value`
+                ).textContent = e.target.value;
+              });
             break;
-          case "ui_rearrange_order": 
+          case "ui_rearrange_order":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.question_text
+              params.question_text || ""
             )}</div>`;
-            let rearrangeItemsHtml = params.items
+            const itemsHtml = (params.items || [])
               .map(
-                (item, index) =>
-                  `<div class="rearrange-item" draggable="true" data-value="${item}" id="${params.variable_name}_item_${index}">${item}</div>`
+                (item, idx) =>
+                  `<div class="rearrange-item" draggable="true" data-value="${item}" id="${params.variable_name}_item_${idx}">${item}</div>`
               )
               .join("");
-
             dynamicInputArea.innerHTML = `
-                        <div id="${params.variable_name}_container" class="rearrange-container">
-                            ${rearrangeItemsHtml}
-                        </div>
-                        <input type="hidden" id="${params.variable_name}_ordered_values" value='[]'>
-                        <button onclick="
-                            const currentItems = Array.from(document.querySelectorAll('#${params.variable_name}_container .rearrange-item'))
-                                .map(item => item.dataset.value);
-                            document.getElementById('${params.variable_name}_ordered_values').value = JSON.stringify(currentItems);
-                            handleUserInput('${params.variable_name}', 'rearrange_order');
-                        ">Submit Order</button>
-                    `;
-            const container = document.getElementById(`${params.variable_name}_container`);
+              <div id="${params.variable_name}_container" class="rearrange-container">
+                ${itemsHtml}
+              </div>
+              <input type="hidden" id="${params.variable_name}_ordered_values" value="[]">
+              <button onclick="
+                const items = Array.from(document.querySelectorAll('#${params.variable_name}_container .rearrange-item')).map(i=>i.dataset.value);
+                document.getElementById('${params.variable_name}_ordered_values').value = JSON.stringify(items);
+                handleUserInput('${params.variable_name}', 'rearrange_order');
+              ">Submit Order</button>
+            `;
+            const container = document.getElementById(
+              `${params.variable_name}_container`
+            );
             let draggedItem = null;
-            container.addEventListener('dragstart', (e) => {
-                draggedItem = e.target;
-                if (draggedItem.classList.contains('rearrange-item')) {
-                    setTimeout(() => draggedItem.classList.add('dragging'), 0);
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', draggedItem.dataset.value);
-                } else {
-                    e.preventDefault();
-                }
-            });
-            container.addEventListener('dragover', (e) => {
+            container.addEventListener("dragstart", (e) => {
+              draggedItem = e.target;
+              if (draggedItem.classList.contains("rearrange-item")) {
+                setTimeout(() => draggedItem.classList.add("dragging"), 0);
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", draggedItem.dataset.value);
+              } else {
                 e.preventDefault();
-                const target = e.target;
-                if (target.classList.contains('rearrange-item') && target !== draggedItem) {
-                    const bounding = target.getBoundingClientRect();
-                    const offset = bounding.y + (bounding.height / 2);
-                    if (e.clientY > offset) {
-                        container.insertBefore(draggedItem, target.nextSibling);
-                    } else {
-                        container.insertBefore(draggedItem, target);
-                    }
-                }
+              }
             });
-            container.addEventListener('dragend', () => {
-                if (draggedItem) {
-                    draggedItem.classList.remove('dragging');
-                    draggedItem = null;
+            container.addEventListener("dragover", (e) => {
+              e.preventDefault();
+              const target = e.target;
+              if (
+                target.classList.contains("rearrange-item") &&
+                target !== draggedItem
+              ) {
+                const rect = target.getBoundingClientRect();
+                const offset = rect.y + rect.height / 2;
+                if (e.clientY > offset) {
+                  container.insertBefore(draggedItem, target.nextSibling);
+                } else {
+                  container.insertBefore(draggedItem, target);
                 }
+              }
+            });
+            container.addEventListener("dragend", () => {
+              if (draggedItem) {
+                draggedItem.classList.remove("dragging");
+                draggedItem = null;
+              }
             });
             break;
           case "ui_drawing_board":
             chatContainer.innerHTML += `<div class="question">${marked.parse(
-              params.prompt_text
+              params.prompt_text || ""
             )}</div>`;
             dynamicInputArea.innerHTML = `
-                        <canvas id="${params.variable_name}_canvas" width="300" height="150" style="border: 1px solid #000; background-color: #fff;"></canvas>
-                        <input type="hidden" id="${params.variable_name}_image_data" value="">
-                        <button onclick="
-                            const canvas = document.getElementById('${params.variable_name}_canvas');
-                            const imageData = canvas.toDataURL('image/png');
-                            document.getElementById('${params.variable_name}_image_data').value = imageData;
-                            handleUserInput('${params.variable_name}', 'drawing_board');
-                        ">Submit Drawing</button>
-                    `;
-            const canvas = document.getElementById(`${params.variable_name}_canvas`);
-            const ctx = canvas.getContext('2d');
+              <canvas id="${params.variable_name}_canvas" width="320" height="180"></canvas>
+              <input type="hidden" id="${params.variable_name}_image_data" value="">
+              <button onclick="
+                const canvas = document.getElementById('${params.variable_name}_canvas');
+                const imageData = canvas.toDataURL('image/png');
+                document.getElementById('${params.variable_name}_image_data').value = imageData;
+                handleUserInput('${params.variable_name}', 'drawing_board');
+              ">Submit Drawing</button>
+            `;
+            const canvas = document.getElementById(
+              `${params.variable_name}_canvas`
+            );
+            const ctx = canvas.getContext("2d");
             let isDrawing = false;
             ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#000';
-            canvas.addEventListener('mousedown', (e) => {
-                isDrawing = true;
-                ctx.beginPath();
-                const rect = canvas.getBoundingClientRect();
-                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.lineCap = "round";
+            ctx.strokeStyle = "#000";
+            const getPos = (e) => {
+              const rect = canvas.getBoundingClientRect();
+              const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+              const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+              return { x: clientX - rect.left, y: clientY - rect.top };
+            };
+            const start = (e) => {
+              e.preventDefault();
+              isDrawing = true;
+              ctx.beginPath();
+              const p = getPos(e);
+              ctx.moveTo(p.x, p.y);
+            };
+            const move = (e) => {
+              if (!isDrawing) return;
+              e.preventDefault();
+              const p = getPos(e);
+              ctx.lineTo(p.x, p.y);
+              ctx.stroke();
+            };
+            const end = () => {
+              isDrawing = false;
+            };
+            canvas.addEventListener("mousedown", start);
+            canvas.addEventListener("mousemove", move);
+            canvas.addEventListener("mouseup", end);
+            canvas.addEventListener("mouseout", end);
+            canvas.addEventListener("touchstart", start);
+            canvas.addEventListener("touchmove", move);
+            canvas.addEventListener("touchend", end);
+            canvas.addEventListener("touchcancel", end);
+            break;
+          case "ui_button":
+            const button = document.createElement("button");
+            button.textContent = params.text || "Continue";
+            button.addEventListener("click", () => {
+              sendActionToBackend(
+                params.next_command,
+                params.next_command_parameters || {}
+              );
             });
-            canvas.addEventListener('mousemove', (e) => {
-                if (isDrawing) {
-                    const rect = canvas.getBoundingClientRect();
-                    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-                    ctx.stroke();
-                }
-            });
-            canvas.addEventListener('mouseup', () => { isDrawing = false; });
-            canvas.addEventListener('mouseout', () => { isDrawing = false; });
-            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const rect = canvas.getBoundingClientRect(); ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); });
-            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (isDrawing) { const rect = canvas.getBoundingClientRect(); ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); ctx.stroke(); } });
-            canvas.addEventListener('touchend', () => { isDrawing = false; });
-            canvas.addEventListener('touchcancel', () => { isDrawing = false; });
+            dynamicInputArea.appendChild(button);
             break;
           default:
             chatContainer.innerHTML += `<div class="error-message">Unknown UI Command: ${action.command}</div>`;
@@ -503,72 +643,71 @@
             return;
           }
         } else if (inputType === "radio") {
-          const selectedRadio = document.querySelector(
+          const selected = document.querySelector(
             `input[name="${variableName}"]:checked`
           );
-          if (!selectedRadio) {
+          if (!selected) {
             alert("Please select an option.");
             return;
           }
-          value = selectedRadio.value;
+          value = selected.value;
         } else if (inputType === "checkbox") {
-          const selectedCheckboxes = document.querySelectorAll(
+          const selected = document.querySelectorAll(
             `input[name="${variableName}"]:checked`
           );
-          if (selectedCheckboxes.length === 0) {
+          if (!selected.length) {
             alert("Please select at least one option.");
             return;
           }
-          value = Array.from(selectedCheckboxes).map((cb) => cb.value);
+          value = Array.from(selected).map((cb) => cb.value);
         } else if (inputType === "slider") {
           value = document.getElementById(variableName).value;
         } else if (inputType === "rearrange_order") {
-          const hiddenInput = document.getElementById(`${variableName}_ordered_values`);
-          if (!hiddenInput || !hiddenInput.value || hiddenInput.value === '[]') {
+          const hidden = document.getElementById(
+            `${variableName}_ordered_values`
+          );
+          if (!hidden || !hidden.value || hidden.value === "[]") {
             alert("Please arrange the items.");
             return;
           }
           try {
-            value = JSON.parse(hiddenInput.value);
-          } catch (e) {
-            console.error("Error parsing rearranged order:", e);
-            alert("Could not process rearrangement. Please try again.");
+            value = JSON.parse(hidden.value);
+          } catch {
+            alert("Could not process rearrangement.");
             return;
           }
         } else if (inputType === "drawing_board") {
-          const hiddenInput = document.getElementById(`${variableName}_image_data`);
-          if (!hiddenInput || !hiddenInput.value.trim()) {
-            alert("Please draw something on the board.");
+          const hidden = document.getElementById(`${variableName}_image_data`);
+          if (!hidden || !hidden.value.trim()) {
+            alert("Please draw something.");
             return;
           }
-          value = hiddenInput.value;
+          value = hidden.value;
         }
 
         let nextCommand;
         let nextParams = {};
 
-        // LLM will determine command based on `input_variable_name` and `input_type`
-        // if no specific variable name matches.
         if (variableName === "topic_query") {
           nextCommand = "generate_course_plan";
           nextParams.query = value;
-        } else if (
-          variableName === "initial_paraphrase" ||
-          variableName === "final_summary"
-        ) {
-          nextCommand = "evaluate_paraphrase"; 
+        } else if (variableName === "initial_paraphrase") {
+          nextCommand = "evaluate_paraphrase";
           nextParams.user_input = value;
-        } else if (variableName.startsWith("q_lesson") || variableName.startsWith("q_checkpoint_")) {
-          // Both practice and checkpoint questions go to evaluate_answer
+        } else if (variableName === "final_summary") {
+          nextCommand = "evaluate_summary";
+          nextParams.user_input = value;
+        } else if (
+          variableName.startsWith("q_lesson") ||
+          variableName.startsWith("q_checkpoint_")
+        ) {
           nextCommand = "evaluate_answer";
           nextParams.user_answer = value;
-          nextParams.question_id = variableName; // Crucial for LLM to know which question was answered
-        } else if (variableName === "user_feedback_input") { // Handle specific feedback input
-          nextCommand = "process_feedback"; // New command for feedback processing
+          nextParams.question_id = variableName;
+        } else if (variableName === "user_feedback_input") {
+          nextCommand = "process_feedback";
           nextParams.feedback = value;
-        }
-        else {
-          // Default fallback for any other unexpected UI input
+        } else {
           nextCommand = "handle_user_question";
           nextParams.user_question_value = value;
           nextParams.input_variable_name = variableName;
@@ -578,15 +717,13 @@
         sendActionToBackend(nextCommand, nextParams);
       }
 
-      // On page load, send the initial 'init' command
       window.onload = () => {
-        // Get user_name from a prompt or mock it
         const userName =
           prompt("Welcome! What's your name, learner?") || "Learner";
         sendActionToBackend("init", { user_name: userName });
-        setupPersistentButtons(); // Setup persistent buttons on load
-        updateProgressBar(currentStatus.current_lesson_progress); // Initialize progress bar
-        updatePersistentButtons(); // Set initial state of persistent buttons
+        setupPersistentButtons();
+        updateProgressBar(currentStatus.current_lesson_progress);
+        updatePersistentButtons();
       };
     </script>
   </body>
