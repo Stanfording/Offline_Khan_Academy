@@ -159,8 +159,10 @@ def ask_tutor(user_action_data, current_status_dictionary, messages_history=None
 
     try:
         raw_text = provider.generate_content(final_messages, temperature=0.7, session_id=session_id)
+        # logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id} raw_text={raw_text}")
         try:
             llm_response_json = json.loads(raw_text)
+            logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id} raw_text={raw_text} llm_response_json={llm_response_json}")
         except json.JSONDecodeError:
             candidate = _extract_balanced_json_block(raw_text)
             if candidate:

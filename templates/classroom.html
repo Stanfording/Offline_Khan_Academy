@@ -1,210 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-    <title>The Magic Notebook</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Kalam:wght@400;700&display=swap" rel="stylesheet"/>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>The Marauder’s Lesson Map</title>
 
-    <style>
-      :root{
-        --parchment:#efe2bf;
-        --parchment-deep:#e6d5a6;
-        --ink:#2b2622;
-        --sepia:#5a3f25;
-        --gold:#a77b2b;
-        --shadow:rgba(0,0,0,.22);
-        --shadow2:rgba(0,0,0,.10);
-      }
-      html,body{height:100%}
-      body{
-        margin:0;color:var(--ink);
-        font-family:"Kalam","Caveat","Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-        background:
-          radial-gradient(ellipse at center, rgba(0,0,0,.10) 0%, rgba(0,0,0,.20) 65%, rgba(0,0,0,.35) 100%),
-          url('https://i.imgur.com/o7r6n0E.jpg') center/cover fixed,
-          url('https://i.imgur.com/0H0bq3W.png') repeat fixed,
-          url('https://i.imgur.com/3n1m3Vw.png') center/cover fixed,
-          linear-gradient(var(--parchment),var(--parchment-deep));
-        background-blend-mode: multiply, multiply, overlay, multiply, normal;
-      }
-      .page-wrap{max-width:1060px;margin:0 auto;padding:22px 16px 40px}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-      /* Hand-drawn, no-straight-lines look using blobs and curves */
-      .blob-card{
-        position:relative;
-        background:rgba(255,252,243,.9);
-        filter: drop-shadow(0 18px 40px var(--shadow)) drop-shadow(0 3px 10px var(--shadow2));
-        --r: 22px;
-        clip-path: path("M15,30 
-                         C20,8 110,0 180,10 
-                         C260,20 340,20 430,12 
-                         C520,5 620,8 645,28 
-                         C670,48 670,90 650,120
-                         C630,150 610,220 540,230
-                         C470,240 300,240 210,230
-                         C120,220 60,210 40,185
-                         C20,160 10,60 15,30 Z");
-        padding: 16px;
-      }
-      .blob-thin{
-        clip-path: path("M15,20 
-                         C40,0 200,0 310,10 
-                         C420,20 520,15 590,8
-                         C660,0 680,20 690,40
-                         C700,60 700,70 690,90
-                         C680,110 650,120 600,125
-                         C550,130 360,130 260,125
-                         C160,120 60,120 30,100
-                         C0,80 0,40 15,20 Z");
-      }
-      .notebook{
-        position:relative;margin:0 auto;max-width:980px;
-      }
-      .frame{
-        position:relative;
-        padding:10px;
-      }
-      .frame::before{
-        content:"";
-        position:absolute;inset:0;pointer-events:none;
-        background:
-          url('https://i.imgur.com/Q6cZ7Db.png') repeat;
-        mix-blend-mode:multiply;opacity:.35;
-      }
-      .frame::after{
-        content:"";
-        position:absolute;inset:0;pointer-events:none;
-        background:
-          url('https://i.imgur.com/Fr6YxKQ.png') center/cover,
-          radial-gradient(ellipse at center, rgba(0,0,0,0) 65%, rgba(0,0,0,.18) 100%);
-        mix-blend-mode:multiply;opacity:.45;
-      }
+<style>
+  :root{
+    --parchment:#e6d5b0;
+    --parchment-deep:#d6c195;
+    --ink:#2a2018;
+    --ink-faded:#4b3a2b;
+    --line:#7c5a3b;
+    --gild:#8d6a2c;
+    --scarlet:#6e1f1b;
+    --practice:#2f6b3a;
+    --intuition:#b99151;
+    --shadow:rgba(0,0,0,.28);
+    --shadow2:rgba(0,0,0,.12);
 
-      h1{
-        text-align:center;margin:6px 0 14px;
-        color:var(--sepia);letter-spacing:.5px;font-weight:700;
-        text-shadow:0 1px 0 rgba(255,255,255,.35);
-      }
+    /* Aura orb defaults */
+    --aura: 36, 34, 28;
+    --aura-glow: rgba(255,230,160,.35);
+  }
 
-      .notebook-header .ribbon{
-        height:26px;min-width:150px;background:linear-gradient(180deg,#d0b06c,#9d7934);
-        color:#fff;display:flex;align-items:center;justify-content:center;
-        border-radius:14px 6px 14px 6px;
-        box-shadow:0 2px 6px var(--shadow2);font-weight:700;letter-spacing:.5px
-      }
-      .header-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-      .progress-wrap{flex:1;display:flex;align-items:center;gap:10px}
-      .progress-blob{
-        position:relative;height:20px;flex:1;background:#e3d2a5;color:#fff;
-        clip-path: path("M10,10 C30,-5 150,-5 250,8 C350,20 450,8 520,5 C610,0 640,20 650,30 C660,40 660,60 650,70 C640,80 600,90 530,92 C460,94 360,94 260,92 C160,90 60,88 30,70 C0,52 -10,25 10,10 Z");
-        overflow:hidden;
-      }
-      .progress-bar{
-        position:absolute;left:0;top:0;height:100%;width:0%;
-        background:linear-gradient(90deg,#b98b3b,#7fb16e);
-        transition:width .5s ease;
-      }
-      .progress-text{position:absolute;right:10px;top:0;height:100%;display:flex;align-items:center;font-size:12px}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--ink);
+    font-family:"IM Fell English", serif;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,.15) 0%, rgba(0,0,0,.42) 100%),
+      url("https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=1600&auto=format&fit=crop") center/cover fixed;
+    background-blend-mode:multiply, normal;
+  }
 
-      .btn{
-        padding:7px 12px;background:#fff6e3;cursor:pointer;
-        border:none; /* remove straight borders */
-        border-radius:16px/12px;
-        box-shadow:0 1px 0 rgba(0,0,0,.06);
-        transition:transform .05s ease, box-shadow .2s ease, background .2s ease;
-        font-family:"Kalam",cursive;color:var(--sepia)
-      }
-      .btn:hover{background:#fff0cf}
-      .btn:active{transform:translateY(1px)}
-      .btn-gold{background:linear-gradient(180deg,#fff1cf,#ffe3a3)}
-      .btn-ghost{background:rgba(255,255,255,.75)}
-      .tools-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .page-wrap{max-width:1060px;margin:0 auto;padding:20px 12px 38px}
+  h1{
+    text-align:center;margin:8px 0 14px;color:var(--scarlet);
+    font-family:"Cinzel",serif;font-weight:700;letter-spacing:1px;
+    text-shadow:0 1px 0 rgba(255,255,255,.35)
+  }
 
-      .chat-container{
-        margin-top:10px; padding:14px; height:58vh; overflow-y:auto;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.64), rgba(255,255,255,.54)),
-          repeating-linear-gradient(#fffaf0,#fffaf0 28px, rgba(0,0,0,.06) 29px, #fffaf0 30px);
-        border-radius:18px/14px;
-      }
+  .notebook{
+    position:relative;overflow:hidden;border-radius:6px;
+    background:rgba(235,218,180,.94);
+    border:2px solid #8a6a40;
+    box-shadow:0 24px 60px var(--shadow), 0 6px 16px var(--shadow2);
+    transform-origin:top center; animation:unfold 900ms ease-out both;
+  }
+  @keyframes unfold{0%{transform:rotateX(75deg) scale(.98);opacity:0}60%{transform:rotateX(0) scale(1.005);opacity:1}100%{transform:rotateX(0) scale(1)}}
 
-      .note,.question{
-        position:relative;padding:12px 14px;margin:12px 0;border-radius:14px/12px;
-        box-shadow:0 2px 6px rgba(0,0,0,.05);
-        font-size:1.06rem;color:var(--ink);
-        background:rgba(255,255,255,.92);
-      }
-      .note{ outline: 3px solid rgba(127,177,110,.35); outline-offset: -6px;}
-      .question{ background:#fff3d3; outline: 3px solid rgba(185,139,59,.3); outline-offset: -6px;}
-      .typewriter{display:inline-block;white-space:pre-wrap}
+  /* Texture layers */
+  .notebook::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      url("https://i.imgur.com/3n1m3Vw.png") center/cover,
+      linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.55));
+    mix-blend-mode:multiply;opacity:.38;
+  }
+  .notebook::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      url("https://i.imgur.com/Fr6YxKQ.png") center/cover,
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 65%, rgba(0,0,0,.22) 100%);
+    mix-blend-mode:multiply;opacity:.48;
+  }
 
-      .input-area{
-        margin-top:10px; padding:12px 14px; border-radius:16px/12px;
-        background:rgba(255,250,240,.88);
-      }
-      input[type="text"]{
-        width:100%; padding:10px 12px; border:none; border-radius:12px/10px;
-        background:#fffdf6; box-shadow: inset 0 0 0 2px rgba(185,155,100,.35);
-        font-family:"Kalam","Caveat",cursive;font-size:1.05rem;color:var(--ink)
-      }
-      .inline-actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-      .math-keypad{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
-      .math-keypad button{padding:6px 10px;border:none;border-radius:10px;background:#fff;cursor:pointer;font-family:"Kalam",cursive;box-shadow:0 0 0 2px rgba(185,155,100,.35) inset}
+  .ornate-frame{position:relative;margin:10px;border:1px solid rgba(90,63,37,.45)}
+  .ornate-frame::before{
+    content:"";position:absolute;inset:0;border:10px double rgba(141,106,44,.3);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.08);pointer-events:none;
+  }
 
-      .rearrange-container{padding:10px;min-height:70px;background:#fff;border-radius:14px/10px;box-shadow: inset 0 0 0 2px rgba(185,155,100,.35)}
-      .rearrange-item{background:#f7f3ea;padding:8px;border-radius:12px/10px;cursor:grab;user-select:none;margin-bottom:6px;box-shadow:0 0 0 2px rgba(185,155,100,.35) inset}
-      .rearrange-item.dragging{opacity:.55}
-      .drop-highlight{outline:3px dashed rgba(185,139,59,.6); outline-offset:6px; transition: outline-color .2s ease}
+  /* Header cartouche */
+  .notebook-header{
+    padding:8px 12px;display:flex;align-items:center;gap:10px;
+    border-bottom:1px solid #a48252;
+    background:
+      radial-gradient(circle at 30% -70%, rgba(255,255,255,.35), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
+  }
+  .ribbon{
+    height:26px;min-width:160px;padding:0 12px;
+    background:linear-gradient(180deg, #b18f54, #7f5c23);
+    color:#f9efe0;display:flex;align-items:center;justify-content:center;
+    border-radius:3px;box-shadow:0 2px 6px var(--shadow2);
+    font-family:"Cinzel",serif;font-weight:700;letter-spacing:.6px;
+  }
 
-      .raw-json-output{background:#fff7ea;margin-top:10px;padding:10px;border-radius:14px/12px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;max-height:150px;overflow:auto;color:#5a554d}
-      .user-message{background:#e9fff0;padding:6px 8px;margin:8px 0;border-radius:12px/10px}
-      .error-message{color:#8b1e1e;font-weight:700;background:#ffe8e8;padding:6px;border-radius:12px/10px;margin:8px 0}
+  /* Aura orb (status) */
+  .orb{
+    width:24px;height:24px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, rgba(var(--aura),.95), rgba(var(--aura),.5) 65%, rgba(var(--aura),.2) 100%);
+    box-shadow:0 0 0 2px rgba(255,255,255,.3), 0 0 16px var(--aura-glow);
+    margin-left:auto; position:relative; overflow:visible;
+  }
+  .orb::after{
+    content:""; position:absolute; inset:-6px; border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(255,215,130,.25), transparent 40%, rgba(180,255,190,.18), transparent 75%, rgba(255,200,200,.18), transparent 100%);
+    filter:blur(6px); animation:orbspin 9s linear infinite;
+  }
+  @keyframes orbspin { to { transform:rotate(360deg) } }
 
-      /* Spellbook panel (UI tests) */
-      .spellbook{margin-top:10px; padding:10px; border-radius:16px/12px; background:rgba(255,252,240,.85); display:flex; gap:8px; flex-wrap:wrap}
-      .spellbook .btn{font-size:.9rem}
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  </head>
-  <body>
-    <div class="page-wrap">
-      <h1>The Magic Notebook ✨</h1>
+  .mute-toggle{ margin-left:6px }
 
-      <div class="notebook">
-        <div class="frame blob-card">
-          <div class="notebook-header">
-            <div class="header-row">
-              <div class="ribbon">Lesson</div>
-              <div class="progress-wrap">
-                <div class="progress-blob">
-                  <div class="progress-bar" id="lessonProgressBar"></div>
-                  <div class="progress-text" id="lessonProgressText">0%</div>
-                </div>
-              </div>
-              <div class="tools-row">
-                <button id="toggleTypewriterBtn" class="btn btn-gold">Disable Typewriter</button>
-                <button id="speakSelectionBtn" class="btn btn-ghost">🔊 Speak Selection</button>
-              </div>
+  /* Progress vial */
+  .progress-wrap{flex:1;display:flex;align-items:center;gap:10px}
+  .progress-container{
+    flex:1;height:18px;border:1px solid #a48252;border-radius:14px;
+    background:repeating-linear-gradient(135deg, rgba(124,90,59,.15) 0 10px, rgba(124,90,59,.05) 10px 20px);
+    overflow:hidden;position:relative;
+  }
+  .progress-container::after{
+    content:"";position:absolute;inset:-12px -30px;background:
+      radial-gradient(circle at 20% 50%, rgba(255,255,255,.45), transparent 40%),
+      radial-gradient(circle at 80% 50%, rgba(0,0,0,.05), transparent 45%);
+    pointer-events:none;mix-blend-mode:overlay;
+  }
+  .progress-bar{
+    height:100%;width:0%;
+    background:linear-gradient(90deg, #6a3d14, #b98b3b 55%, #7fb16e 100%);
+    color:#fff;font-size:11px;line-height:18px;text-align:right;padding-right:6px;
+    transition:width .6s ease;box-shadow:inset 0 0 10px rgba(0,0,0,.3);
+  }
+
+  .header-controls{display:flex;gap:6px}
+  .btn{
+    padding:6px 10px;border:1px solid #8a6a40;border-radius:18px;
+    background:rgba(249,238,214,.9);cursor:pointer;
+    transition:transform .05s ease, box-shadow .2s ease, background .25s ease;
+    color:var(--ink);font-family:"IM Fell English",serif;position:relative;overflow:hidden;
+  }
+  .btn:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 0%, rgba(255,255,255,.5), transparent 40%);opacity:.7;pointer-events:none}
+  .btn:hover{background:rgba(255,245,220,1)}
+  .btn:active{transform:translateY(1px)}
+  .btn-gold{border-color:#b99151}
+  .btn-ghost{background:rgba(255,255,255,.6)}
+
+  .toolbar{
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 12px;
+    background:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.6));
+    border-bottom:1px dashed #a48252;
+  }
+
+  .content{display:grid;grid-template-rows:auto 1fr auto auto}
+
+  /* Map canvas behind chat for wayfinding */
+  .map-overlay{
+    position:absolute; inset:0; pointer-events:none; opacity:.15;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(0,0,0,.35) 0 1px, transparent 2px),
+      radial-gradient(circle at 48% 42%, rgba(0,0,0,.35) 0 1px, transparent 2px),
+      radial-gradient(circle at 72% 65%, rgba(0,0,0,.35) 0 1px, transparent 2px);
+    background-size: 300px 300px;
+    transform:translateZ(0);
+  }
+
+  .chat-container{
+    position:relative;padding:16px;height:56vh;overflow-y:auto;
+    background:
+      url("https://i.imgur.com/3QqE2Xf.png") repeat,
+      linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.5));
+  }
+
+  /* Footsteps */
+  .footsteps{
+    --x-start:-40px; --y-start:10px;
+    position:absolute;width:120px;height:24px;pointer-events:none;opacity:.25;
+    background:url('https://i.imgur.com/0V1u0gF.png') repeat-x center/contain;
+    transform:translate(var(--x-start), var(--y-start));
+    animation:walk 9s linear forwards; filter:sepia(.6) contrast(.9);
+  }
+  @keyframes walk{
+    0%{transform:translate(var(--x-start), var(--y-start)) rotate(2deg);opacity:.05}
+    10%{opacity:.35}
+    100%{transform:translate(calc(var(--x-start) + 120%), calc(var(--y-start) + 320px)) rotate(-6deg);opacity:.02}
+  }
+  .pause-circle{
+    position:absolute;width:10px;height:10px;border:1px solid #6e1f1b;border-radius:50%;
+    box-shadow:0 0 0 2px rgba(110,31,27,.2); background:rgba(255,240,220,.6);
+    transform:translate(-50%,-50%);
+  }
+
+  /* Cards */
+  .note,.question{
+    position:relative;padding:12px 14px;margin:12px 0;border-radius:6px;
+    border:1px solid rgba(122,92,58,.55);color:var(--ink);
+    background:rgba(255,252,240,.9);
+    box-shadow:0 1px 0 rgba(0,0,0,.06);
+    animation:ink-bloom 680ms ease-out both;
+  }
+  .note{border-left:6px solid #7a5a33}
+  .question{border-left:6px solid #6e1f1b;background:rgba(255,246,226,.92)}
+  @keyframes ink-bloom{0%{clip-path:circle(0% at 0 0);opacity:0}60%{clip-path:circle(120% at 0 0);opacity:.95}100%{clip-path:circle(150% at 0 0);opacity:1}}
+
+  .wax-seal{
+    position:absolute;right:-10px;top:-10px;width:28px;height:28px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, #8a1715, #5a0f0e 70%);
+    box-shadow:0 3px 0 rgba(0,0,0,.25), inset 0 3px 6px rgba(255,255,255,.2);
+    transform:scale(.2);opacity:0;animation:seal 420ms ease-out 120ms forwards;
+  }
+  @keyframes seal{to{transform:scale(1);opacity:1}}
+
+  .typewriter{display:inline-block;white-space:pre-wrap;position:relative}
+  .typewriter::after{
+    content:"";position:absolute;right:-4px;top:0;width:2px;height:1.2em;
+    background:linear-gradient(var(--ink), var(--ink-faded));
+    animation:quill 800ms steps(2,end) infinite;
+  }
+  @keyframes quill{50%{opacity:0}}
+
+  /* Inputs */
+  .input-area{
+    display:flex;gap:8px;flex-wrap:wrap;padding:12px 12px;border-top:1px dashed #a48252;background:rgba(255,248,232,.92)
+  }
+  input[type="text"]{
+    flex:1;padding:10px 12px;border:1px solid #8a6a40;border-radius:14px;
+    background:rgba(255,252,240,1);font-family:"IM Fell English",serif;font-size:1.05rem;color:var(--ink);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
+  }
+  .math-keypad{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+  .math-keypad button{padding:6px 10px;border-radius:12px;border:1px solid #8a6a40;background:#fff8e6;cursor:pointer;font-family:"IM Fell English",serif}
+  .mic-btn{padding:6px 12px;border-radius:18px;border:1px solid #8a6a40;background:#fff2d0;cursor:pointer;margin-left:6px}
+  .mic-btn.active{background:#ffe6e6;border-color:#b05454}
+
+  .persistent-buttons-area{
+    display:flex;gap:10px;padding:12px 16px;border-top:1px solid #a48252;justify-content:center;background:rgba(255,245,226,.9)
+  }
+
+  .raw-json-output{
+    background:rgba(255,240,210,.7);padding:10px;border-top:1px dashed #a48252;
+    white-space:pre-wrap;font-family:ui-monospace, Menlo, Consolas, monospace;max-height:150px;overflow:auto;color:#4f3d2c;
+  }
+
+  .user-message{ text-align:right;background:rgba(221,255,236,.6);padding:6px 8px;margin:8px 0;border-right:3px solid #7fb16e;border-radius:6px;font-style:italic }
+  .error-message{ color:#8b1e1e;font-weight:700;background:#ffe8e8;padding:6px;border-left:3px solid #b3261e;border-radius:6px;margin:8px 0 }
+
+  /* Rearrange + tags */
+  .rearrange-container{border:1px dashed #8a6a40;padding:10px;min-height:60px;background:rgba(255,252,240,.92);border-radius:10px}
+  .rearrange-item{background:#f5ebd2;padding:8px;border:1px solid #b08b57;border-radius:8px;cursor:grab;user-select:none;margin-bottom:6px}
+  .rearrange-item.dragging{opacity:.55}
+  .drop-highlight{outline:2px dashed #6e1f1b;outline-offset:6px;transition:outline-color .2s ease}
+
+  /* MCQ drag-to-seal */
+  .tag-option{
+    display:inline-block;margin:4px 6px;padding:6px 10px;border:1px solid #8a6a40;border-radius:14px;background:#fff7dd;cursor:grab;user-select:none;
+  }
+  .seal-drop{
+    display:inline-flex;align-items:center;justify-content:center;margin-left:10px;
+    width:52px;height:52px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, #8a1715, #5a0f0e 70%);
+    box-shadow:0 3px 0 rgba(0,0,0,.25), inset 0 3px 6px rgba(255,255,255,.2);
+    color:#ffe; font-weight:700; border:2px solid rgba(255,255,255,.25);
+    filter:saturate(.9); transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .seal-drop.glow{ box-shadow:0 0 0 3px rgba(255,220,160,.6), 0 0 18px rgba(255,200,150,.45), inset 0 3px 6px rgba(255,255,255,.2); transform:scale(1.05) }
+
+  /* Spellbook bar */
+  .spellbook{padding:8px 12px;border-top:1px dashed #a48252;background:rgba(255,250,235,.82);display:flex;gap:8px;flex-wrap:wrap}
+  .spellbook .btn{font-size:.92rem}
+</style>
+</head>
+<body>
+  <div class="page-wrap">
+    <h1>The Marauder’s Lesson Map</h1>
+
+    <div class="notebook" id="mapNotebook">
+      <div class="map-overlay" id="mapOverlay"></div>
+
+      <div class="ornate-frame">
+        <div class="notebook-header">
+          <div class="ribbon" id="stageRibbon">Lesson</div>
+
+          <div class="progress-wrap">
+            <div class="progress-container">
+              <div class="progress-bar" id="lessonProgressBar">0%</div>
             </div>
           </div>
 
-          <div class="tools-row" style="margin-top:10px">
-            <span style="font-weight:700;color:var(--sepia)">Tools:</span>
-            <button id="btnFeedback" class="btn">Give Feedback</button>
-            <button id="btnNextLesson" class="btn">Next Lesson</button>
-            <button id="btnSkipPractice" class="btn">Skip Practice</button>
-            <button id="btnRevealStatus" class="btn">Reveal My Status</button>
+          <div class="orb" id="statusOrb" title="Your study aura"></div>
+
+          <div class="header-controls">
+            <button id="toggleTypewriterBtn" class="btn btn-gold">Disable Self‑Inking</button>
+            <button id="speakSelectionBtn" class="btn btn-ghost">🔊 Read Ink</button>
+            <button id="muteBtn" class="btn btn-ghost mute-toggle" aria-pressed="false" title="Toggle sounds">🔇 Mute</button>
           </div>
+        </div>
 
+        <div class="toolbar">
+          <span style="font-weight:700;color:var(--ink)">Legend:</span>
+          <button id="btnFeedback" class="btn">Owl Feedback</button>
+          <button id="btnNextLesson" class="btn">Next Scroll</button>
+          <button id="btnSkipPractice" class="btn">Skip Drills</button>
+          <button id="btnRevealStatus" class="btn">Reveal My Footsteps</button>
+
+          <!-- Breadcrumb ribbons (rooms visited) -->
+          <div id="breadcrumbs" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+
+        <div class="content">
           <div class="chat-container" id="chatContainer"></div>
-
           <div id="dynamicInputArea" class="input-area"></div>
 
-          <!-- Spellbook test panel -->
           <div class="spellbook" id="spellbook">
-            <span style="font-weight:700;color:var(--sepia)">Spellbook (UI test):</span>
+            <span style="font-weight:700;color:var(--ink)">Spellbook (UI test):</span>
             <button class="btn" data-spell="notes">Notes</button>
             <button class="btn" data-spell="short">Short Answer</button>
             <button class="btn" data-spell="short-math">Short Answer (Math)</button>
@@ -215,359 +318,629 @@
             <button class="btn" data-spell="draw">Drawing</button>
           </div>
 
+          <div id="persistentButtonsArea" class="persistent-buttons-area"></div>
+
           <div class="raw-json-output">
-            <strong>Raw LLM Response (debug):</strong>
+            <strong>Secret Legend (debug):</strong>
             <pre id="rawOutput"></pre>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <script>
-      const sessionId = "{{ session_id }}";
-      const chatContainer = document.getElementById("chatContainer");
-      const dynamicInputArea = document.getElementById("dynamicInputArea");
-      const rawOutputDiv = document.getElementById("rawOutput");
-      const bar = document.getElementById("lessonProgressBar");
-      const barText = document.getElementById("lessonProgressText");
-      const toggleTypewriterBtn = document.getElementById("toggleTypewriterBtn");
-      const speakSelectionBtn = document.getElementById("speakSelectionBtn");
-      const spellbook = document.getElementById("spellbook");
+<script>
+  // Soundscape (Phase 1 & 5)
+  const sounds = {
+    rustle: new Audio("https://cdn.pixabay.com/download/audio/2023/06/14/audio_4e0a3a5c0a.mp3?filename=paper-page-turn-147780.mp3"),
+    stamp: new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_5f9f7d2b8d.mp3?filename=stamp-1-117106.mp3"),
+    chime: new Audio("https://cdn.pixabay.com/download/audio/2021/09/16/audio_3a4d62d9a4.mp3?filename=ui-interface-click-tone-1-22814.mp3"),
+    ambient: new Audio("https://cdn.pixabay.com/download/audio/2022/03/10/audio_c2d3f47ea3.mp3?filename=light-paper-rustle-ambient-108271.mp3")
+  };
+  sounds.ambient.loop = true;
+  let muted = (localStorage.getItem("mapMuted") ?? "false") === "true";
+  const muteBtn = document.getElementById("muteBtn");
+  function setMuteState(m) {
+    muted = m;
+    localStorage.setItem("mapMuted", String(muted));
+    muteBtn.textContent = muted ? "🔈 Unmute" : "🔇 Mute";
+    const vol = muted ? 0 : 0.5;
+    Object.values(sounds).forEach(a => a.volume = vol);
+    if (!muted) {
+      try { sounds.ambient.play().catch(()=>{}); } catch {}
+    } else {
+      try { sounds.ambient.pause(); } catch {}
+    }
+  }
+  muteBtn.addEventListener("click", () => setMuteState(!muted));
+  setMuteState(muted);
 
-      const btnFeedback = document.getElementById('btnFeedback');
-      const btnNextLesson = document.getElementById('btnNextLesson');
-      const btnSkipPractice = document.getElementById('btnSkipPractice');
-      const btnRevealStatus = document.getElementById('btnRevealStatus');
+  // Core references (unchanged IDs)
+  const sessionId = "{{ session_id }}";
+  const chatContainer = document.getElementById("chatContainer");
+  const dynamicInputArea = document.getElementById("dynamicInputArea");
+  const rawOutputDiv = document.getElementById("rawOutput");
+  const lessonProgressBar = document.getElementById("lessonProgressBar");
+  const toggleTypewriterBtn = document.getElementById("toggleTypewriterBtn");
+  const speakSelectionBtn = document.getElementById("speakSelectionBtn");
+  const spellbook = document.getElementById("spellbook");
+  const breadcrumbs = document.getElementById("breadcrumbs");
+  const mapOverlay = document.getElementById("mapOverlay");
+  const stageRibbon = document.getElementById("stageRibbon");
+  const statusOrb = document.getElementById("statusOrb");
 
-      // Route answers correctly using pending meta
-      let pendingInputMeta = null; // { type, variable, testQuestionId? }
+  const btnFeedback = document.getElementById("btnFeedback");
+  const btnNextLesson = document.getElementById("btnNextLesson");
+  const btnSkipPractice = document.getElementById("btnSkipPractice");
+  const btnRevealStatus = document.getElementById("btnRevealStatus");
 
-      // Local Test Registry for Spellbook
-      const TestRegistry = {
-        // id -> {type, variable_name, correct, concept, options?}
-        byId: {},
-        add(q){ this.byId[q.id]=q; },
-        get(id){ return this.byId[id]; }
-      };
+  // Wayfinding rooms (Phase 2)
+  const rooms = []; // { id, title, el }
+  function addRoomAnchor(title, el) {
+    const id = "room_" + (rooms.length + 1);
+    rooms.push({ id, title, el });
+    const b = document.createElement("button");
+    b.className = "btn btn-ghost";
+    b.textContent = title;
+    b.addEventListener("click", () => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      nudgeMapTo(el);
+    });
+    breadcrumbs.appendChild(b);
+  }
+  function nudgeMapTo(el) {
+    const rect = el.getBoundingClientRect();
+    const host = chatContainer.getBoundingClientRect();
+    const x = (rect.left - host.left) / host.width;
+    const y = (rect.top - host.top) / host.height;
+    // pan the map overlay subtly
+    mapOverlay.animate(
+      [{ transform: `translate(${(-x*20+10)}px, ${(-y*20+10)}px)` },
+       { transform: `translate(${(-x*40+20)}px, ${(-y*40+20)}px)` }],
+      { duration: 700, fill: "forwards", easing: "ease-out" }
+    );
+  }
 
-      // Typewriter
-      let typewriterEnabled = (localStorage.getItem('typewriterEnabled') ?? 'true') === 'true';
-      const updateTypewriterButton = () => toggleTypewriterBtn.textContent = typewriterEnabled ? 'Disable Typewriter' : 'Enable Typewriter';
-      toggleTypewriterBtn.addEventListener('click', ()=>{ typewriterEnabled=!typewriterEnabled; localStorage.setItem('typewriterEnabled',String(typewriterEnabled)); updateTypewriterButton(); });
-      updateTypewriterButton();
+  // Footsteps (Phase 1)
+  function leaveFootsteps() {
+    const f = document.createElement("div");
+    f.className = "footsteps";
+    const x = Math.random() * (chatContainer.clientWidth - 120);
+    const y = Math.random() * 20 + 6;
+    f.style.setProperty('--x-start', x + 'px');
+    f.style.setProperty('--y-start', y + 'px');
+    chatContainer.appendChild(f);
+    setTimeout(() => f.remove(), 9500);
+  }
+  setInterval(()=>{ if(document.hasFocus()) leaveFootsteps(); }, 14000);
 
-      // Speak selection
-      function speak(text){ if(!window.speechSynthesis){ alert("Speech not supported."); return; } const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
-      const getSelectionText = ()=> (window.getSelection()?.toString() || '').trim();
-      speakSelectionBtn.addEventListener('click', ()=>{ const t=getSelectionText(); if(t) speak(t); });
-      chatContainer.addEventListener('dblclick', ()=>{ const t=getSelectionText(); if(t) speak(t); });
+  // Pause circle at questions
+  function dropPauseCircle(target) {
+    const pc = document.createElement("div");
+    pc.className = "pause-circle";
+    const r = target.getBoundingClientRect();
+    const host = chatContainer.getBoundingClientRect();
+    pc.style.left = (r.left - host.left + 10) + "px";
+    pc.style.top = (r.top - host.top + 10) + "px";
+    chatContainer.appendChild(pc);
+    setTimeout(()=> pc.remove(), 3000);
+  }
 
-      // Status
-      let currentStatus = { learning_confidence:5, learning_interest:5, learning_patience:5, effort_focus:10, weak_concept_spot:{}, current_lesson_progress:0, lesson_stage:"not_in_lesson", current_lesson_title:"", active_question_id:"" };
+  // Pending input meta
+  let pendingInputMeta = null;
 
-      function updateProgress(p){ p=Math.max(0,Math.min(100,p||0)); bar.style.width=`${p}%`; barText.textContent=`${Math.round(p)}%`; }
-      function updateToolbar(){ const s=currentStatus.lesson_stage, p=currentStatus.current_lesson_progress; btnNextLesson.disabled=!(s==='lesson_complete'||p>=95); btnNextLesson.style.opacity=btnNextLesson.disabled?0.5:1; btnSkipPractice.style.display=(s==='practice')?'inline-block':'none'; }
+  // Typewriter toggle
+  let typewriterEnabled = (localStorage.getItem("typewriterEnabled") ?? "true") === "true";
+  const updateTypewriterButton = () =>
+    (toggleTypewriterBtn.textContent = typewriterEnabled ? "Disable Self‑Inking" : "Enable Self‑Inking");
+  toggleTypewriterBtn.addEventListener("click", () => {
+    typewriterEnabled = !typewriterEnabled;
+    localStorage.setItem("typewriterEnabled", String(typewriterEnabled));
+    updateTypewriterButton();
+  });
+  updateTypewriterButton();
 
-      // Toolbar actions
-      btnFeedback.addEventListener('click', ()=> sendAction('give_feedback',{}));
-      btnNextLesson.addEventListener('click', ()=> sendAction('start_lesson',{lesson_index:'next'}));
-      btnSkipPractice.addEventListener('click', ()=> sendAction('skip_practice',{}));
-      btnRevealStatus.addEventListener('click', renderStatusSnapshot);
+  // Speak selection
+  function speak(text){
+    if(!window.speechSynthesis){ alert("Speech not supported."); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+  }
+  const getSelectionText = () => (window.getSelection()?.toString() || "").trim();
+  speakSelectionBtn.addEventListener("click", () => { const t=getSelectionText(); if(t) speak(t); });
+  chatContainer.addEventListener("dblclick", () => { const t=getSelectionText(); if(t) speak(t); });
 
-      function renderStatusSnapshot(){
-        const s=currentStatus;
-        const html = `
-          <div><strong>Confidence:</strong> ${s.learning_confidence}/10</div>
-          <div><strong>Interest:</strong> ${s.learning_interest}/10</div>
-          <div><strong>Patience:</strong> ${s.learning_patience}/10</div>
-          <div><strong>Focus:</strong> ${s.effort_focus}/10</div>
-          <div><strong>Stage:</strong> ${s.lesson_stage}</div>
-          <div><strong>Progress:</strong> ${s.current_lesson_progress}%</div>`;
-        const el=document.createElement('div'); el.className='note'; el.innerHTML=html; chatContainer.appendChild(el); chatContainer.scrollTop=chatContainer.scrollHeight;
-      }
+  // Status and aura (Phase 4)
+  let currentStatus = {
+    learning_confidence:5, learning_interest:5, learning_patience:5,
+    effort_focus:10, weak_concept_spot:{},
+    current_lesson_progress:0, lesson_stage:"not_in_lesson",
+    current_lesson_title:"", active_question_id:""
+  };
+  function auraFromStatus(s) {
+    // Map 1–10 scales into hues and glow
+    const conf = (s.learning_confidence ?? 5) / 10;
+    const interest = (s.learning_interest ?? 5) / 10;
+    const patience = (s.learning_patience ?? 5) / 10;
+    const h = 40 + Math.round(60 * interest); // gold to spring
+    const l = 25 + Math.round(25 * conf);
+    const a = `hsl(${h}deg 40% ${l}%)`;
+    statusOrb.style.setProperty("--aura-glow", `color-mix(in srgb, ${a} 55%, rgba(255,230,160,.35))`);
+  }
+  function rippleStage(stage){
+    const color = stage==="practice" ? "rgba(120,190,120,.55)" :
+                  stage==="intuition" ? "rgba(220,190,120,.55)" :
+                  "rgba(200,170,120,.45)";
+    document.querySelector(".notebook").animate(
+      [{ boxShadow: `inset 0 0 0 0 ${color}` }, { boxShadow: `inset 0 0 60px 0 ${color}` }, { boxShadow: `inset 0 0 0 0 ${color}` }],
+      { duration: 1200, easing: "ease-out" }
+    );
+    stageRibbon.textContent = stage === "practice" ? "Practice" :
+                              stage === "lesson_complete" ? "Complete" :
+                              "Lesson";
+  }
 
-      async function sendAction(command, parameters = {}){
-        const payload = { session_id:sessionId, user_action:{ command, parameters } };
-        const msg=document.createElement('div'); msg.className='user-message';
-        msg.innerHTML=`<strong>You:</strong> ${command} ${Object.keys(parameters).length?JSON.stringify(parameters):''}`;
-        chatContainer.appendChild(msg);
+  function updateProgressBar(p){
+    p = Math.max(0, Math.min(100, p || 0));
+    lessonProgressBar.style.width = `${p}%`;
+    lessonProgressBar.textContent = `${Math.round(p)}%`;
+    if (!muted && (p % 25 < 1)) { try{ sounds.chime.currentTime=0; sounds.chime.play(); }catch{} }
+  }
+  function updateToolbarButtons(){
+    const stage = currentStatus.lesson_stage, progress = currentStatus.current_lesson_progress;
+    btnNextLesson.disabled = !(stage === "lesson_complete" || progress >= 95);
+    btnNextLesson.style.opacity = btnNextLesson.disabled ? 0.5 : 1;
+    btnSkipPractice.style.display = stage === "practice" ? "inline-block" : "none";
+    auraFromStatus(currentStatus);
+    rippleStage(stage);
+  }
 
-        try{
-          const res=await fetch("/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-          if(!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data=await res.json();
-          rawOutputDiv.textContent=JSON.stringify(data,null,2);
-          dynamicInputArea.innerHTML="";
-          pendingInputMeta = null;
+  // Toolbar actions
+  btnFeedback.addEventListener("click", ()=> sendActionToBackend("give_feedback", {}));
+  btnNextLesson.addEventListener("click", ()=> sendActionToBackend("start_lesson", { lesson_index:"next" }));
+  btnSkipPractice.addEventListener("click", ()=> sendActionToBackend("skip_practice", {}));
+  btnRevealStatus.addEventListener("click", renderStatusSnapshot);
 
-          if(data.current_status){ currentStatus=data.current_status; updateProgress(currentStatus.current_lesson_progress||0); updateToolbar(); }
-          if(Array.isArray(data.actions)){ for(const a of data.actions) renderAction(a); }
-          else{ const e=document.createElement('div'); e.className='error-message'; e.textContent='Invalid AI response format.'; chatContainer.appendChild(e); }
-        }catch(err){
-          const e=document.createElement('div'); e.className='error-message'; e.textContent=`Error communicating with AI: ${err.message}`; chatContainer.appendChild(e);
-        }finally{ chatContainer.scrollTop=chatContainer.scrollHeight; }
-      }
+  function renderStatusSnapshot(){
+    const s=currentStatus;
+    const html = `
+      <div><strong>Confidence:</strong> ${s.learning_confidence}/10</div>
+      <div><strong>Interest:</strong> ${s.learning_interest}/10</div>
+      <div><strong>Patience:</strong> ${s.learning_patience}/10</div>
+      <div><strong>Focus:</strong> ${s.effort_focus}/10</div>
+      <div><strong>Stage:</strong> ${s.lesson_stage}</div>
+      <div><strong>Progress:</strong> ${s.current_lesson_progress}%</div>`;
+    const el = document.createElement("div");
+    el.className = "note";
+    el.innerHTML = html + '<div class="wax-seal" aria-hidden="true"></div>';
+    chatContainer.appendChild(el);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    try{ if(!muted){ sounds.rustle.currentTime=0; sounds.rustle.play(); } }catch{}
+    addRoomAnchor("Status", el);
+    nudgeMapTo(el);
+  }
 
-      function typewriter(el, html){
-        if(!typewriterEnabled){ el.innerHTML=html; return; }
-        const temp=document.createElement('div'); temp.innerHTML=html;
-        const text=temp.textContent||temp.innerText||"";
-        const span=document.createElement('span'); span.className='typewriter'; el.appendChild(span);
-        let i=0, speed=12; const t=setInterval(()=>{ span.textContent=text.slice(0,i++); if(i>text.length) clearInterval(t); }, speed);
-      }
+  async function sendActionToBackend(command, parameters = {}){
+    const payload = { session_id: sessionId, user_action: { command, parameters } };
+    const msg = document.createElement("div");
+    msg.className = "user-message";
+    msg.innerHTML = `<strong>You:</strong> ${command} ${Object.keys(parameters).length ? JSON.stringify(parameters) : ""}`;
+    chatContainer.appendChild(msg);
 
-      function renderAction(action){
-        const p=action.parameters||{};
-        switch(action.command){
-          case "ui_display_notes":{
-            const el=document.createElement('div'); el.className='note'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.content||"")); break;
-          }
-          case "ui_short_answer":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.question_text||""));
-            const v=p.variable_name;
-            if(v==="initial_paraphrase") pendingInputMeta={type:"paraphrase", variable:v};
-            else if(v==="final_summary") pendingInputMeta={type:"summary", variable:v};
-            else if(v==="user_feedback_input") pendingInputMeta={type:"feedback", variable:v};
-            else pendingInputMeta={type:"answer", variable:v};
-
-            const needsMath=p.hints&&(p.hints.math_input===true);
-            dynamicInputArea.innerHTML = `
-              <input type="text" id="${v}" placeholder="${p.placeholder||""}">
-              <div class="inline-actions">
-                <button class="btn btn-gold" onclick="handleUserInput('${v}','text')">Send</button>
-                <button id="micBtn" class="btn">🎤 Press to speak</button>
-              </div>
-              ${needsMath?`
-              <div class="math-keypad" aria-label="Math keypad">
-                <button data-k="+">+</button><button data-k="-">−</button><button data-k="*">×</button><button data-k="/">÷</button>
-                <button data-k="=">=</button><button data-k="^">^</button><button data-k="(">(</button><button data-k=")">)</button>
-                <button data-k="x">x</button><button data-k="y">y</button>
-                <button data-k="backspace">⌫</button><button data-k="clear">Clear</button>
-              </div>`:''}
-            `;
-            if(needsMath) attachMath(v);
-            attachVoice('micBtn', v);
-            document.getElementById(v)?.focus();
-            break;
-          }
-          case "ui_mcq":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.question_text||""));
-            const opts=(p.options||[]).map((opt,i)=>`<label style="display:block;margin:4px 0;"><input type="radio" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`).join("");
-            dynamicInputArea.innerHTML = `<div>${opts}</div><div class="inline-actions"><button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','radio')">Submit</button></div>`;
-            pendingInputMeta={type:"answer", variable:p.variable_name};
-            break;
-          }
-          case "ui_checkbox":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.question_text||""));
-            const opts=(p.options||[]).map((opt,i)=>`<label style="display:block;margin:4px 0;"><input type="checkbox" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`).join("");
-            dynamicInputArea.innerHTML = `<div>${opts}</div><div class="inline-actions"><button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','checkbox')">Submit</button></div>`;
-            pendingInputMeta={type:"answer", variable:p.variable_name};
-            break;
-          }
-          case "ui_slider":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.question_text||""));
-            const def=(typeof p.min==='number'&&typeof p.max==='number')?p.min:1;
-            dynamicInputArea.innerHTML = `
-              <input type="range" id="${p.variable_name}" min="${p.min}" max="${p.max}" value="${def}">
-              <div class="inline-actions">
-                <span id="${p.variable_name}_value" style="min-width:2ch">${def}</span>
-                <button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','slider')">Submit</button>
-              </div>`;
-            document.getElementById(p.variable_name).addEventListener('input',(e)=>{ document.getElementById(`${p.variable_name}_value`).textContent=e.target.value; });
-            pendingInputMeta={type:"answer", variable:p.variable_name};
-            break;
-          }
-          case "ui_rearrange_order":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.question_text||""));
-            const items=(p.items||[]).map((it,i)=>`<div class="rearrange-item" draggable="true" data-value="${it}" id="${p.variable_name}_item_${i}">${it}</div>`).join("");
-            dynamicInputArea.innerHTML = `
-              <div id="${p.variable_name}_container" class="rearrange-container drop-highlight">${items}</div>
-              <input type="hidden" id="${p.variable_name}_ordered_values" value="[]">
-              <div class="inline-actions"><button class="btn btn-gold" onclick="
-                const items=Array.from(document.querySelectorAll('#${p.variable_name}_container .rearrange-item')).map(i=>i.dataset.value);
-                document.getElementById('${p.variable_name}_ordered_values').value=JSON.stringify(items);
-                handleUserInput('${p.variable_name}','rearrange_order');">Submit Order</button></div>`;
-            const container=document.getElementById(`${p.variable_name}_container`);
-            let dragged=null;
-            container.addEventListener('dragstart',(e)=>{ const t=e.target; if(!t.classList.contains('rearrange-item')) return; dragged=t; dragged.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', t.dataset.value); });
-            container.addEventListener('dragover',(e)=>{ e.preventDefault(); const after=getAfter(container,e.clientY); if(after==null) container.appendChild(dragged); else container.insertBefore(dragged,after); });
-            container.addEventListener('drop',(e)=>{ e.preventDefault(); dragged&&dragged.classList.remove('dragging'); dragged=null; });
-            container.addEventListener('dragend',()=>{ dragged&&dragged.classList.remove('dragging'); dragged=null; });
-            function getAfter(container,y){ const els=[...container.querySelectorAll('.rearrange-item:not(.dragging)')]; return els.reduce((c,child)=>{ const box=child.getBoundingClientRect(); const off=y-box.top-box.height/2; return (off<0&&off>c.offset)?{offset:off,element:child}:c; },{offset:-Infinity}).element; }
-            pendingInputMeta={type:"answer", variable:p.variable_name};
-            break;
-          }
-          case "ui_drawing_board":{
-            const el=document.createElement('div'); el.className='question'; chatContainer.appendChild(el);
-            typewriter(el, marked.parse(p.prompt_text||""));
-            dynamicInputArea.innerHTML = `
-              <canvas id="${p.variable_name}_canvas" width="320" height="180" style="background:#fff;border-radius:14px/10px;box-shadow: inset 0 0 0 2px rgba(185,155,100,.35)"></canvas>
-              <input type="hidden" id="${p.variable_name}_image_data" value="">
-              <div class="inline-actions"><button class="btn btn-gold" onclick="
-                const c=document.getElementById('${p.variable_name}_canvas');
-                const d=c.toDataURL('image/png');
-                document.getElementById('${p.variable_name}_image_data').value=d;
-                handleUserInput('${p.variable_name}','drawing_board');">Submit Drawing</button></div>`;
-            const canvas=document.getElementById(`${p.variable_name}_canvas`); const ctx=canvas.getContext('2d');
-            let isDrawing=false; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000';
-            const pos=(e)=>{ const r=canvas.getBoundingClientRect(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; return {x:x-r.left,y:y-r.top}; };
-            const start=(e)=>{ e.preventDefault(); isDrawing=true; ctx.beginPath(); const p2=pos(e); ctx.moveTo(p2.x,p2.y); };
-            const move=(e)=>{ if(!isDrawing) return; e.preventDefault(); const p2=pos(e); ctx.lineTo(p2.x,p2.y); ctx.stroke(); };
-            const end=()=>{ isDrawing=false; };
-            canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); canvas.addEventListener('mouseup',end); canvas.addEventListener('mouseout',end);
-            canvas.addEventListener('touchstart',start); canvas.addEventListener('touchmove',move); canvas.addEventListener('touchend',end); canvas.addEventListener('touchcancel',end);
-            pendingInputMeta={type:"answer", variable:p.variable_name};
-            break;
-          }
-          case "ui_button":{
-            const b=document.createElement('button'); b.className='btn btn-gold'; b.textContent=p.text||"Continue";
-            b.addEventListener('click', ()=> sendAction(p.next_command, p.next_command_parameters||{}));
-            dynamicInputArea.appendChild(b); break;
-          }
-          default:{
-            const e=document.createElement('div'); e.className='error-message'; e.textContent=`Unknown UI Command: ${action.command}`; chatContainer.appendChild(e);
-          }
-        }
-        chatContainer.scrollTop=chatContainer.scrollHeight;
-      }
-
-      function attachMath(inputId){
-        const area=dynamicInputArea.querySelector('.math-keypad'); if(!area) return;
-        const input=document.getElementById(inputId);
-        area.addEventListener('click',(e)=>{
-          const btn=e.target.closest('button'); if(!btn||!btn.dataset.k) return;
-          const k=btn.dataset.k;
-          if(k==='clear') input.value='';
-          else if(k==='backspace') input.value=input.value.slice(0,-1);
-          else input.value += (k==='*' ? '*' : k);
-          input.focus();
-        });
-      }
-      function attachVoice(buttonId, inputId){
-        const micBtn=document.getElementById(buttonId); if(!micBtn) return;
-        const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-        if(!SR){ micBtn.disabled=true; micBtn.title="Speech not supported in this browser."; return; }
-        const rec=new SR(); rec.lang='en-US'; rec.interimResults=false; rec.maxAlternatives=1;
-        micBtn.addEventListener('click', ()=>{ if(micBtn.classList.contains('active')){ rec.stop(); micBtn.classList.remove('active'); } else { rec.start(); micBtn.classList.add('active'); }});
-        rec.addEventListener('result',(e)=>{ const t=e.results[0][0].transcript||''; const input=document.getElementById(inputId); if(input) input.value=t; });
-        rec.addEventListener('end', ()=> micBtn.classList.remove('active'));
-        rec.addEventListener('error', ()=> micBtn.classList.remove('active'));
-      }
-
-      // Local correctness check for Spellbook tests
-      function localCheckAndSend(variableName, value, inputType){
-        if(pendingInputMeta && pendingInputMeta.testQuestionId){
-          const q = TestRegistry.get(pendingInputMeta.testQuestionId);
-          if(q){
-            let correct=false;
-            if(q.type==='mcq' || q.type==='short'){ correct = (String(value).trim() === String(q.correct).trim()); }
-            else if(q.type==='checkbox'){ const ans = Array.isArray(value)? value.map(x=>String(x).trim()).sort().join(',') : String(value); const gt = Array.isArray(q.correct)? q.correct.map(x=>String(x).trim()).sort().join(',') : String(q.correct); correct = (ans===gt); }
-            else if(q.type==='rearrange'){ correct = JSON.stringify(value) === JSON.stringify(q.correct); }
-            // Send evaluate_answer with expected fields so backend/LLM behaves normally
-            const nextParams = { user_answer: value, question_id: q.variable_name, test_correct: correct, test_concept: q.concept };
-            sendAction('evaluate_answer', nextParams);
-            return true;
-          }
-        }
-        return false;
-      }
-
-      function handleUserInput(variableName, inputType){
-        let value;
-        if(inputType==="text"){ value=document.getElementById(variableName).value; if(!value.trim()){ alert("Please enter something."); return; } }
-        else if(inputType==="radio"){ const sel=document.querySelector(`input[name="${variableName}"]:checked`); if(!sel){ alert("Please select an option."); return; } value=sel.value; }
-        else if(inputType==="checkbox"){ const sel=document.querySelectorAll(`input[name="${variableName}"]:checked`); if(!sel.length){ alert("Please select at least one option."); return; } value=Array.from(sel).map(cb=>cb.value); }
-        else if(inputType==="slider"){ value=document.getElementById(variableName).value; }
-        else if(inputType==="rearrange_order"){ const hid=document.getElementById(`${variableName}_ordered_values`); if(!hid||!hid.value||hid.value==='[]'){ alert("Please arrange the items."); return; } try{ value=JSON.parse(hid.value);}catch{ alert("Could not process rearrangement."); return; } }
-        else if(inputType==="drawing_board"){ const hid=document.getElementById(`${variableName}_image_data`); if(!hid||!hid.value.trim()){ alert("Please draw something."); return; } value=hid.value; }
-
-        // First: local test registry path (Spellbook)
-        if (localCheckAndSend(variableName, value, inputType)) return;
-
-        // Normal routing with pending meta
-        let nextCommand, nextParams={};
-        if (pendingInputMeta && pendingInputMeta.variable === variableName) {
-          if (pendingInputMeta.type === "paraphrase") { nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
-          else if (pendingInputMeta.type === "summary") { nextCommand="evaluate_summary"; nextParams.user_input=value; }
-          else if (pendingInputMeta.type === "feedback") { nextCommand="process_feedback"; nextParams.feedback=value; }
-          else { nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName; }
-        } else {
-          if (variableName === "topic_query") { nextCommand="generate_course_plan"; nextParams.query=value; }
-          else if (variableName === "initial_paraphrase") { nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
-          else if (variableName === "final_summary") { nextCommand="evaluate_summary"; nextParams.user_input=value; }
-          else if (variableName.startsWith("q_lesson") || variableName.startsWith("q_checkpoint_")) { nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName; }
-          else if (variableName === "user_feedback_input") { nextCommand="process_feedback"; nextParams.feedback=value; }
-          else { nextCommand="handle_user_question"; nextParams.user_question_value=value; nextParams.input_variable_name=variableName; nextParams.input_type=inputType; }
-        }
-        sendAction(nextCommand, nextParams);
-      }
-
-      // Spellbook: spawn UIs and register expected answers so tests can pass correctly
-      spellbook.addEventListener('click', (e)=>{
-        const b=e.target.closest('button[data-spell]'); if(!b) return;
-        const s=b.dataset.spell;
-        const fake=(cmd, params)=> renderAction({ command: cmd, parameters: params||{} });
-
-        if (s==='notes') {
-          fake("ui_display_notes",{ content:"### Ancient Note\nInk bleeds softly into the parchment fibers. The map hums with quiet magic."});
-        }
-        if (s==='short') {
-          const id="spell_short1";
-          TestRegistry.add({ id, type:"short", variable_name:id, correct:"Gravity pulls objects toward Earth", concept:"ConceptRecall" });
-          fake("ui_short_answer",{ question_text:"In one sentence, what is gravity?", variable_name:id, placeholder:"Your sentence..." });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='short-math') {
-          const id="spell_short_math1";
-          TestRegistry.add({ id, type:"short", variable_name:id, correct:"3", concept:"SolveLinear" });
-          fake("ui_short_answer",{ question_text:"Solve 3x + 2 = 11 (use keypad)", variable_name:id, placeholder:"x = ...", hints:{ math_input:true }});
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='mcq') {
-          const id="spell_mcq1";
-          TestRegistry.add({ id, type:"mcq", variable_name:id, correct:"17", concept:"PrimeNumbers" });
-          fake("ui_mcq",{ question_text:"Which is prime?", options:["12","15","17"], variable_name:id });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='checkbox') {
-          const id="spell_cbx1";
-          TestRegistry.add({ id, type:"checkbox", variable_name:id, correct:["2","6"], concept:"EvenNumbers" });
-          fake("ui_checkbox",{ question_text:"Select all even numbers:", options:["2","3","6","9"], variable_name:id });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='slider') {
-          const id="spell_slider1";
-          TestRegistry.add({ id, type:"short", variable_name:id, correct:"10", concept:"MetaFeedback" });
-          fake("ui_slider",{ question_text:"Set slider to 10 to pass this test.", min:1, max:10, variable_name:id });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='rearrange') {
-          const id="spell_rearr1";
-          TestRegistry.add({ id, type:"rearrange", variable_name:id, correct:["2","4","7","9"], concept:"Ordering" });
-          fake("ui_rearrange_order",{ question_text:"Put in ascending order:", items:["7","2","9","4"], variable_name:id });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
-        if (s==='draw') {
-          const id="spell_draw1";
-          TestRegistry.add({ id, type:"short", variable_name:id, correct:"[image]", concept:"Sketch" });
-          fake("ui_drawing_board",{ prompt_text:"Sketch a right triangle.", variable_name:id });
-          pendingInputMeta = { type:"answer", variable:id, testQuestionId:id };
-        }
+    try{
+      const res = await fetch("/ask", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(payload),
       });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      rawOutputDiv.textContent = JSON.stringify(data, null, 2);
+      dynamicInputArea.innerHTML = "";
+      pendingInputMeta = null;
 
-      // Init
-      window.onload = ()=>{
-        const userName = prompt("Welcome! What's your name, learner?") || "Learner";
-        sendAction("init", { user_name: userName });
-        updateProgress(currentStatus.current_lesson_progress);
-        updateToolbar();
-      };
-    </script>
-  </body>
+      if(data.current_status){
+        currentStatus = data.current_status;
+        updateProgressBar(currentStatus.current_lesson_progress || 0);
+        updateToolbarButtons();
+      }
+      if(Array.isArray(data.actions)){
+        for(const a of data.actions) renderUICommand(a);
+        leaveFootsteps();
+      }else{
+        const e = document.createElement("div");
+        e.className = "error-message";
+        e.textContent = "Invalid AI response format.";
+        chatContainer.appendChild(e);
+      }
+    }catch(err){
+      const e = document.createElement("div");
+      e.className = "error-message";
+      e.textContent = `Error communicating with AI: ${err.message}`;
+      chatContainer.appendChild(e);
+    }finally{
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }
+
+  // Self-inking
+  function typewriterInsert(container, html){
+    if(!typewriterEnabled){ container.innerHTML = html + '<div class="wax-seal" aria-hidden="true"></div>'; return; }
+    const temp = document.createElement("div"); temp.innerHTML = html;
+    const text = temp.textContent || temp.innerText || "";
+    const wrapper = document.createElement("div");
+    wrapper.className = "typewriter"; container.appendChild(wrapper);
+    let i=0; const speed=14;
+    const interval = setInterval(()=>{
+      wrapper.textContent = text.slice(0, i++);
+      if(i > text.length) {
+        clearInterval(interval);
+        const s = document.createElement("div");
+        s.className = "wax-seal"; s.setAttribute("aria-hidden","true");
+        container.appendChild(s);
+        try{ if(!muted){ sounds.stamp.currentTime=0; sounds.stamp.play(); } }catch{}
+      }
+    }, speed);
+    try{ if(!muted){ sounds.rustle.currentTime=0; sounds.rustle.play(); } }catch{}
+  }
+
+  // Drag-to-seal helpers (Phase 3)
+  function makeSealDrop(onDropValue){
+    const c = document.createElement("div");
+    c.className = "seal-drop";
+    c.textContent = "✓";
+    c.title = "Drag an option here to submit";
+    c.addEventListener("dragover", (e)=>{ e.preventDefault(); c.classList.add("glow"); });
+    c.addEventListener("dragleave", ()=> c.classList.remove("glow"));
+    c.addEventListener("drop", (e)=>{
+      e.preventDefault(); c.classList.remove("glow");
+      const v = e.dataTransfer.getData("text/plain");
+      if(v) onDropValue(v);
+      try{ if(!muted){ sounds.stamp.currentTime=0; sounds.stamp.play(); } }catch{}
+    });
+    return c;
+  }
+  function makeTagOption(text){
+    const s = document.createElement("span");
+    s.className = "tag-option";
+    s.textContent = text;
+    s.draggable = true;
+    s.addEventListener("dragstart", (e)=>{ e.dataTransfer.setData("text/plain", text); });
+    return s;
+  }
+
+  // Render UI commands
+  function renderUICommand(action){
+    const p = action.parameters || {};
+    switch(action.command){
+      case "ui_display_notes":{
+        const el = document.createElement("div");
+        el.className = "note";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.content || ""));
+        addRoomAnchor(p.title || "Note", el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_short_answer":{
+        const q = document.createElement("div");
+        q.className = "question";
+        chatContainer.appendChild(q);
+        typewriterInsert(q, marked.parse(p.question_text || ""));
+        const v = p.variable_name;
+        if (v === "initial_paraphrase") pendingInputMeta = { type:"paraphrase", variable:v };
+        else if (v === "final_summary") pendingInputMeta = { type:"summary", variable:v };
+        else if (v === "user_feedback_input") pendingInputMeta = { type:"feedback", variable:v };
+        else pendingInputMeta = { type:"answer", variable:v };
+
+        const needsMath = p.hints && p.hints.math_input === true;
+        dynamicInputArea.innerHTML = `
+          <input type="text" id="${v}" placeholder="${p.placeholder || ""}">
+          <button class="btn btn-gold" onclick="handleUserInput('${v}','text')">Send</button>
+          ${needsMath ? `
+          <div class="math-keypad" aria-label="Math keypad">
+            <button data-k="+">+</button><button data-k="-">−</button><button data-k="*">×</button><button data-k="/">÷</button>
+            <button data-k="=">=</button><button data-k="^">^</button><button data-k="(">(</button><button data-k=")">)</button>
+            <button data-k="x">x</button><button data-k="y">y</button>
+            <button data-k="backspace">⌫</button><button data-k="clear">Clear</button>
+            <button id="micBtn" class="mic-btn">🎤 Speak</button>
+          </div>` : `<button id="micBtn" class="mic-btn">🎤 Speak</button>`}
+        `;
+        if(needsMath) attachMathKeypadHandlers(v);
+        attachVoiceToInput("micBtn", v);
+        document.getElementById(v)?.focus();
+        addRoomAnchor("Prompt", q);
+        dropPauseCircle(q);
+        nudgeMapTo(q);
+        break;
+      }
+      case "ui_mcq":{
+        const el = document.createElement("div");
+        el.className = "question";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.question_text || ""));
+        const opts = (p.options || []);
+        const wrap = document.createElement("div");
+        // Traditional radios (preserved)
+        wrap.innerHTML = opts.map((opt,i)=>
+          `<label><input type="radio" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`
+        ).join("<br>");
+        // Drag-to-seal row
+        const sealRow = document.createElement("div");
+        sealRow.style.marginTop = "8px";
+        const seal = makeSealDrop((value)=>{
+          // select matching radio then submit
+          const r = [...wrap.querySelectorAll(`input[name="${p.variable_name}"]`)].find(x => x.value === value);
+          if (r) { r.checked = true; handleUserInput(p.variable_name, 'radio'); }
+        });
+        opts.forEach(o => sealRow.appendChild(makeTagOption(o)));
+        sealRow.appendChild(seal);
+        dynamicInputArea.innerHTML = "";
+        dynamicInputArea.appendChild(wrap);
+        const submit = document.createElement("button");
+        submit.className = "btn btn-gold";
+        submit.textContent = "Submit";
+        submit.onclick = ()=> handleUserInput(p.variable_name, 'radio');
+        dynamicInputArea.appendChild(submit);
+        dynamicInputArea.appendChild(sealRow);
+
+        pendingInputMeta = { type:"answer", variable:p.variable_name };
+        addRoomAnchor("Choice", el);
+        dropPauseCircle(el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_checkbox":{
+        const el = document.createElement("div");
+        el.className = "question";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.question_text || ""));
+        const opts = (p.options || []);
+        const wrap = document.createElement("div");
+        wrap.innerHTML = opts.map((opt,i)=>
+          `<label><input type="checkbox" name="${p.variable_name}" value="${opt}" id="${p.variable_name}_${i}"> ${opt}</label>`
+        ).join("<br>");
+        const sealRow = document.createElement("div"); sealRow.style.marginTop = "8px";
+        const seal = makeSealDrop((value)=>{
+          // toggle the matching checkbox then submit
+          const c = wrap.querySelector(`input[value="${value}"]`);
+          if (c) { c.checked = !c.checked; handleUserInput(p.variable_name,'checkbox'); }
+        });
+        opts.forEach(o => sealRow.appendChild(makeTagOption(o)));
+        sealRow.appendChild(seal);
+
+        dynamicInputArea.innerHTML = "";
+        dynamicInputArea.appendChild(wrap);
+        const submit = document.createElement("button");
+        submit.className = "btn btn-gold"; submit.textContent = "Submit";
+        submit.onclick = ()=> handleUserInput(p.variable_name, 'checkbox');
+        dynamicInputArea.appendChild(submit);
+        dynamicInputArea.appendChild(sealRow);
+
+        pendingInputMeta = { type:"answer", variable:p.variable_name };
+        addRoomAnchor("Selection", el);
+        dropPauseCircle(el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_slider":{
+        const el = document.createElement("div");
+        el.className = "question";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.question_text || ""));
+        const def = (typeof p.min === "number" && typeof p.max === "number") ? p.min : 1;
+        dynamicInputArea.innerHTML = `
+          <input type="range" id="${p.variable_name}" min="${p.min}" max="${p.max}" value="${def}">
+          <div style="display:flex;justify-content:space-between;"><span>${p.min}</span><span id="${p.variable_name}_value">${def}</span><span>${p.max}</span></div>
+          <button class="btn btn-gold" onclick="handleUserInput('${p.variable_name}','slider')">Submit</button>`;
+        document.getElementById(p.variable_name).addEventListener("input",(e)=>{
+          document.getElementById(`${p.variable_name}_value`).textContent = e.target.value;
+        });
+        pendingInputMeta = { type:"answer", variable:p.variable_name };
+        addRoomAnchor("Gauge", el);
+        dropPauseCircle(el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_rearrange_order":{
+        const el = document.createElement("div");
+        el.className = "question";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.question_text || ""));
+        const items = (p.items || []).map((it,i)=>
+          `<div class="rearrange-item" draggable="true" data-value="${it}" id="${p.variable_name}_item_${i}">${it}</div>`
+        ).join("");
+        dynamicInputArea.innerHTML = `
+          <div id="${p.variable_name}_container" class="rearrange-container drop-highlight" aria-label="Drag items to reorder">${items}</div>
+          <input type="hidden" id="${p.variable_name}_ordered_values" value="[]">
+          <button class="btn btn-gold" onclick="
+            const items=Array.from(document.querySelectorAll('#${p.variable_name}_container .rearrange-item')).map(i=>i.dataset.value);
+            document.getElementById('${p.variable_name}_ordered_values').value=JSON.stringify(items);
+            handleUserInput('${p.variable_name}','rearrange_order');">Submit Order</button>`;
+        const container = document.getElementById(`${p.variable_name}_container`);
+        let dragged=null;
+        container.addEventListener("dragstart",(e)=>{
+          const t=e.target; if(!t.classList.contains("rearrange-item")) return;
+          dragged=t; dragged.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain", t.dataset.value);
+        });
+        container.addEventListener("dragover",(e)=>{
+          e.preventDefault();
+          const after = getDragAfterElement(container, e.clientY);
+          if(after==null) container.appendChild(dragged); else container.insertBefore(dragged, after);
+        });
+        container.addEventListener("drop",(e)=>{ e.preventDefault(); dragged && dragged.classList.remove("dragging"); dragged=null; });
+        container.addEventListener("dragend",()=>{ dragged && dragged.classList.remove("dragging"); dragged=null;});
+        function getDragAfterElement(container, y){
+          const els=[...container.querySelectorAll(".rearrange-item:not(.dragging)")];
+          return els.reduce((closest,child)=>{
+            const box=child.getBoundingClientRect(); const offset=y - box.top - box.height/2;
+            if(offset<0 && offset>closest.offset){ return {offset, element:child}; } else { return closest; }
+          }, {offset:Number.NEGATIVE_INFINITY}).element;
+        }
+        pendingInputMeta = { type:"answer", variable:p.variable_name };
+        addRoomAnchor("Order", el);
+        dropPauseCircle(el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_drawing_board":{
+        const el = document.createElement("div");
+        el.className = "question";
+        chatContainer.appendChild(el);
+        typewriterInsert(el, marked.parse(p.prompt_text || ""));
+        dynamicInputArea.innerHTML = `
+          <canvas id="${p.variable_name}_canvas" width="320" height="180" style="border:1px solid #8a6a40;background:#fffbe9;border-radius:8px"></canvas>
+          <input type="hidden" id="${p.variable_name}_image_data" value="">
+          <button class="btn btn-gold" onclick="
+            const c=document.getElementById('${p.variable_name}_canvas');
+            const d=c.toDataURL('image/png');
+            document.getElementById('${p.variable_name}_image_data').value=d;
+            handleUserInput('${p.variable_name}','drawing_board');">Submit Drawing</button>`;
+        const canvas=document.getElementById(`${p.variable_name}_canvas`);
+        const ctx=canvas.getContext("2d");
+        let isDrawing=false; ctx.lineWidth=2; ctx.lineCap="round"; ctx.strokeStyle="#2a2018";
+        const path = []; // for simple gesture detection
+        const getPos=(e)=>{ const r=canvas.getBoundingClientRect(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; return {x:x-r.left, y:y-r.top};};
+        const start=(e)=>{ e.preventDefault(); isDrawing=true; ctx.beginPath(); const p2=getPos(e); ctx.moveTo(p2.x,p2.y); path.length=0; path.push(p2);};
+        const move=(e)=>{ if(!isDrawing) return; e.preventDefault(); const p2=getPos(e); ctx.lineTo(p2.x,p2.y); ctx.stroke(); path.push(p2);};
+        const end=()=>{ isDrawing=false; detectGesture(path, canvas); };
+        canvas.addEventListener("mousedown",start); canvas.addEventListener("mousemove",move); canvas.addEventListener("mouseup",end); canvas.addEventListener("mouseout",end);
+        canvas.addEventListener("touchstart",start,{passive:false}); canvas.addEventListener("touchmove",move,{passive:false}); canvas.addEventListener("touchend",end); canvas.addEventListener("touchcancel",end);
+        pendingInputMeta = { type:"answer", variable:p.variable_name };
+        addRoomAnchor("Sketch", el);
+        dropPauseCircle(el);
+        nudgeMapTo(el);
+        break;
+      }
+      case "ui_button":{
+        const b=document.createElement("button");
+        b.className="btn btn-gold"; b.textContent=p.text || "Continue";
+        b.addEventListener("click", ()=> sendActionToBackend(p.next_command, p.next_command_parameters || {}));
+        dynamicInputArea.appendChild(b);
+        break;
+      }
+      default:{
+        const e=document.createElement("div");
+        e.className="error-message"; e.textContent=`Unknown UI Command: ${action.command}`;
+        chatContainer.appendChild(e);
+      }
+    }
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  // Gesture flourish for drawing
+  function detectGesture(points, canvas){
+    if(points.length < 8) return;
+    const dx = points[points.length-1].x - points[0].x;
+    const dy = points[points.length-1].y - points[0].y;
+    const len = Math.hypot(dx,dy);
+    const bbox = points.reduce((b,p)=>({minx:Math.min(b.minx,p.x),maxx:Math.max(b.maxx,p.x),miny:Math.min(b.miny,p.y),maxy:Math.max(b.maxy,p.y)}),{minx:1e9,maxx:-1e9,miny:1e9,maxy:-1e9});
+    const width = bbox.maxx - bbox.minx, height = bbox.maxy - bbox.miny;
+    const straight = len > 0.9 * Math.hypot(width,height); // rough underline/strike
+    if(straight){
+      canvas.animate([{ boxShadow:"0 0 0 0 rgba(255,220,140,.0)" }, { boxShadow:"0 0 24px 6px rgba(255,220,140,.7)" }, { boxShadow:"0 0 0 0 rgba(255,220,140,.0)"}], { duration: 700, easing: "ease-out" });
+    }
+  }
+
+  function attachMathKeypadHandlers(inputId){
+    const area = dynamicInputArea.querySelector(".math-keypad"); if(!area) return;
+    const input = document.getElementById(inputId);
+    area.addEventListener("click",(e)=>{
+      const btn=e.target.closest("button"); if(!btn || !btn.dataset.k) return;
+      const k=btn.dataset.k;
+      if(k==="clear") input.value="";
+      else if(k==="backspace") input.value=input.value.slice(0,-1);
+      else input.value += k==="*" ? "*" : k;
+      input.focus();
+    });
+  }
+
+  function attachVoiceToInput(buttonId, inputId){
+    const micBtn=document.getElementById(buttonId); if(!micBtn) return;
+    const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ micBtn.disabled=true; micBtn.title="Speech not supported in this browser."; return;}
+    const rec=new SR(); rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=1;
+    micBtn.addEventListener("click", ()=>{
+      if(micBtn.classList.contains("active")){ rec.stop(); micBtn.classList.remove("active"); }
+      else { rec.start(); micBtn.classList.add("active"); }
+    });
+    rec.addEventListener("result",(e)=>{
+      const t=e.results[0][0].transcript || "";
+      const input=document.getElementById(inputId); if(input) input.value=t;
+    });
+    rec.addEventListener("end", ()=> micBtn.classList.remove("active"));
+    rec.addEventListener("error", ()=> micBtn.classList.remove("active"));
+  }
+
+  function handleUserInput(variableName, inputType){
+    let value;
+    if(inputType==="text"){
+      value=document.getElementById(variableName).value;
+      if(!value.trim()){ alert("Ink something first."); return;}
+    }else if(inputType==="radio"){
+      const sel=document.querySelector(`input[name="${variableName}"]:checked`);
+      if(!sel){ alert("Choose one."); return;} value=sel.value;
+    }else if(inputType==="checkbox"){
+      const sel=document.querySelectorAll(`input[name="${variableName}"]:checked`);
+      if(!sel.length){ alert("Choose at least one."); return;}
+      value=Array.from(sel).map(cb=>cb.value);
+    }else if(inputType==="slider"){
+      value=document.getElementById(variableName).value;
+    }else if(inputType==="rearrange_order"){
+      const hid=document.getElementById(`${variableName}_ordered_values`);
+      if(!hid || !hid.value || hid.value==="[]"){ alert("Arrange the slips."); return;}
+      try{ value=JSON.parse(hid.value);}catch{ alert("Could not process rearrangement."); return;}
+    }else if(inputType==="drawing_board"){
+      const hid=document.getElementById(`${variableName}_image_data`);
+      if(!hid || !hid.value.trim()){ alert("Sketch a sign."); return;}
+      value=hid.value;
+    }
+
+    let nextCommand, nextParams={};
+    if(pendingInputMeta && pendingInputMeta.variable===variableName){
+      if(pendingInputMeta.type==="paraphrase"){ nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
+      else if(pendingInputMeta.type==="summary"){ nextCommand="evaluate_summary"; nextParams.user_input=value; }
+      else if(pendingInputMeta.type==="feedback"){ nextCommand="process_feedback"; nextParams.feedback=value; }
+      else { nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName; }
+    }else{
+      if(variableName==="topic_query"){ nextCommand="generate_course_plan"; nextParams.query=value; }
+      else if(variableName==="initial_paraphrase"){ nextCommand="evaluate_paraphrase"; nextParams.user_input=value; }
+      else if(variableName==="final_summary"){ nextCommand="evaluate_summary"; nextParams.user_input=value; }
+      else if(variableName.startsWith("q_lesson") || variableName.startsWith("q_checkpoint_")){
+        nextCommand="evaluate_answer"; nextParams.user_answer=value; nextParams.question_id=variableName;
+      }else if(variableName==="user_feedback_input"){
+        nextCommand="process_feedback"; nextParams.feedback=value;
+      }else{
+        nextCommand="handle_user_question";
+        nextParams.user_question_value=value; nextParams.input_variable_name=variableName; nextParams.input_type=inputType;
+      }
+    }
+    sendActionToBackend(nextCommand, nextParams);
+  }
+
+  // Spellbook demo
+  spellbook.addEventListener("click", (e)=>{
+    const b=e.target.closest("button[data-spell]"); if(!b) return;
+    const s=b.dataset.spell;
+    const fake=(cmd,params)=> renderUICommand({command:cmd, parameters:params || {}});
+    if(s==="notes") fake("ui_display_notes", { content:"### A Notation Appears\nInk curls across the parchment, revealing a hint.", title:"Note" });
+    if(s==="short") fake("ui_short_answer", { question_text:"Scribe a sentence about gravity.", variable_name:"test_short", placeholder:"Your thought..."});
+    if(s==="short-math") fake("ui_short_answer", { question_text:"Compute 3x + 2 = 11. Solve for x (use keypad).", variable_name:"test_short_math", placeholder:"x = ...", hints:{math_input:true}});
+    if(s==="mcq") fake("ui_mcq", { question_text:"Which is prime?", options:["12","15","17"], variable_name:"test_mcq"});
+    if(s==="checkbox") fake("ui_checkbox", { question_text:"Select all even numbers:", options:["2","3","6","9"], variable_name:"test_cbx"});
+    if(s==="slider") fake("ui_slider", { question_text:"How confident are you? (demo)", min:1, max:10, variable_name:"test_slider"});
+    if(s==="rearrange") fake("ui_rearrange_order", { question_text:"Put in ascending order:", items:["7","2","9","4"], variable_name:"test_reorder"});
+    if(s==="draw") fake("ui_drawing_board", { prompt_text:"Sketch a right triangle.", variable_name:"test_drawing"});
+  });
+
+  // Init
+  window.onload = () => {
+    const userName = prompt("I solemnly swear I am up to learning. Your name?") || "Wanderer";
+    sendActionToBackend("init", { user_name: userName });
+    updateProgressBar(currentStatus.current_lesson_progress);
+    updateToolbarButtons();
+    setTimeout(()=>{ leaveFootsteps(); try{ if(!muted){ sounds.ambient.play(); } }catch{} }, 800);
+  };
+</script>
+</body>
 </html>
