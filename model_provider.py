@@ -187,6 +187,26 @@ class OllamaProvider(ModelProvider):
             role = "assistant" if role == "model" else "user"
             current_turn_msgs.append({"role": role, "content": content})
 
+        # Detect special image marker on the last user message and extract base64
+
+        images_b64 = []
+        for m in current_turn_msgs:
+            if m["role"] == "user" and m["content"]:
+                try:
+                    lines = m["content"].splitlines()
+                    if lines:
+                        maybe = lines[-1].strip()
+                        obj = json.loads(maybe)
+                        if isinstance(obj, dict) and "__image__" in obj:
+                            im = obj["__image__"]
+                            b64 = im.get("b64", "")
+                            if b64:
+                                images_b64.append(b64)
+                                # Remove the marker line from the actual text the model will see
+                                m["content"] = "\n".join(lines[:-1]).rstrip()
+                except Exception:
+                    pass
+
         # Build the chat payload efficiently:
         ollama_messages = []
 
@@ -214,6 +234,13 @@ class OllamaProvider(ModelProvider):
             ollama_messages.extend(sess["short_messages"][-2*self.max_window_turns:])
             # Finally, the current turn
             ollama_messages.extend(current_turn_msgs)
+
+            # Attach images to the last user message if any were found
+            if images_b64:
+                for i in range(len(ollama_messages)-1, -1, -1):
+                    if ollama_messages[i]["role"] == "user":
+                        ollama_messages[i]["images"] = images_b64  # Ollama expects a list of base64 strings
+                        break
 
         payload = {
             "model": self.model,

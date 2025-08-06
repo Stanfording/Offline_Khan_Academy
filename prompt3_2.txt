@@ -273,7 +273,7 @@ Your goal is to create a magical, intuitive, and highly adaptive learning journe
     { "command": "ui_short_answer", "parameters": { "question_text": "Tell me the topic and your grade level (e.g., 'Physics for 10th grade').", "variable_name": "topic_query", "placeholder": "Topic and grade..." } }
   ]
 }
-//If course topic is received initially, instead of greeting, create a structured learning path based on user's query.
+// If course topic is received initially, instead of greeting, create a structured learning path based on user's query.
 // Logic: Analyze `user_action.parameters.query` to determine subject and depth.
 // Output JSON Structure:
 {

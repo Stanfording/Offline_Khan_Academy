@@ -11,7 +11,7 @@ from model_provider import ModelProvider, GeminiProvider, OllamaProvider
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-MODEL_BACKEND = os.getenv("MODEL_BACKEND", "gemini").lower()
+MODEL_BACKEND = os.getenv("MODEL_BACKEND", "ollama").lower()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
@@ -57,6 +57,24 @@ provider: ModelProvider = build_provider()
 
 NUM_RECENT_CHATS_TO_KEEP = 3
 NUM_CHATS_BEFORE_SUMMARIZATION = 6
+
+def _extract_multimodal_parts(user_action: Dict[str, Any]) -> Dict[str, Any]:
+    text = json.dumps(user_action, ensure_ascii=False)
+    image_b64 = None
+    mime = None
+    try:
+        params = (user_action or {}).get("parameters", {})
+        if "user_answer" in params and isinstance(params["user_answer"], dict):
+            img = params["user_answer"]
+            if "image_b64" in img:
+                image_b64 = img.get("image_b64", "")
+                mime = img.get("mime_type", "image/png")
+    except Exception:
+        pass
+    out = {"text": text}
+    if image_b64:
+        out["image"] = {"mime_type": mime or "image/png", "b64": image_b64}
+    return out
 
 def _extract_balanced_json_block(s: str):
     start = s.find("{")
@@ -150,12 +168,47 @@ def ask_tutor(user_action_data, current_status_dictionary, messages_history=None
     if not current_payload_messages_for_model:
         current_payload_messages_for_model = [{"role": "user", "parts": [user_input_content]}]
 
+    # Build base_messages exactly like before
     first_parts = current_payload_messages_for_model[0]["parts"]
-    final_messages = [
+    base_messages = [
         {"role": "user", "parts": [TUTOR_SYSTEM_PROMPT] + first_parts},
     ] + current_payload_messages_for_model[1:] + [
         {"role": "user", "parts": ['Output must be strict JSON only: {"actions":[...]}']}
     ]
+
+    # Detect if current turn includes an image from drawing_board
+    mm = _extract_multimodal_parts(user_action_data)
+
+    # If Gemini, add inline image data to the last user message
+    if mm.get("image") and provider.name().startswith("gemini:"):
+        for i in range(len(base_messages)-1, -1, -1):
+            if base_messages[i].get("role") == "user":
+                # Combine any existing text parts into a single string
+                combined_text = "\n".join(
+                    [p for p in base_messages[i].get("parts", []) if isinstance(p, str)]
+                )
+                base_messages[i]["parts"] = [
+                    combined_text,
+                    {"inline_data": {
+                        "mime_type": mm["image"]["mime_type"],
+                        "data": mm["image"]["b64"]
+                    }}
+                ]
+                break
+
+    # If Ollama, inject a small JSON marker the provider will parse and convert to images=[base64]
+    elif mm.get("image") and provider.name().startswith("ollama:"):
+        marker = json.dumps({"__image__": {
+            "mime_type": mm["image"]["mime_type"],
+            "b64": mm["image"]["b64"]
+        }})
+        for i in range(len(base_messages)-1, -1, -1):
+            if base_messages[i].get("role") == "user":
+                base_messages[i]["parts"].append(f"\n{marker}")
+                break
+
+    # Use the modified messages going forward
+    final_messages = base_messages
 
     try:
         raw_text = provider.generate_content(final_messages, temperature=0.7, session_id=session_id)

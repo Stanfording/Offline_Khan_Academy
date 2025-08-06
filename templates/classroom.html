@@ -338,7 +338,7 @@
         justify-content: center;
         background: rgba(255, 250, 240, 0.86);
       }
-      .raw-json-output {
+      /* .raw-json-output {
         background: #fff7ea;
         padding: 10px;
         border-top: 1px dashed var(--border);
@@ -347,7 +347,7 @@
         max-height: 150px;
         overflow: auto;
         color: #5a554d;
-      }
+      } */
 
       .user-message {
         text-align: right;
@@ -394,7 +394,7 @@
       }
 
       /* Spellbook test panel */
-      .spellbook {
+      /* .spellbook {
         padding: 8px 14px;
         border-top: 1px dashed var(--border);
         background: rgba(255, 252, 240, 0.8);
@@ -404,7 +404,7 @@
       }
       .spellbook .btn {
         font-size: 0.9rem;
-      }
+      }  */
     </style>
     <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
   </head>
@@ -441,7 +441,7 @@
           <div class="content">
             <div class="chat-container" id="chatContainer"></div>
             <div id="dynamicInputArea" class="input-area"></div>
-            <div class="spellbook" id="spellbook">
+            <!-- <div class="spellbook" id="spellbook">
               <span style="font-weight: 700; color: var(--sepia)"
                 >Spellbook (UI test):</span
               >
@@ -455,15 +455,15 @@
               <button class="btn" data-spell="slider">Slider</button>
               <button class="btn" data-spell="rearrange">Rearrange</button>
               <button class="btn" data-spell="draw">Drawing</button>
-            </div>
+            </div> -->
             <div
               id="persistentButtonsArea"
               class="persistent-buttons-area"
             ></div>
-            <div class="raw-json-output">
+            <!-- <div class="raw-json-output">
               <strong>Raw LLM Response (debug):</strong>
               <pre id="rawOutput"></pre>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -479,7 +479,7 @@
         "toggleTypewriterBtn"
       );
       const speakSelectionBtn = document.getElementById("speakSelectionBtn");
-      const spellbook = document.getElementById("spellbook");
+      // const spellbook = document.getElementById("spellbook");
 
       const btnFeedback = document.getElementById("btnFeedback");
       const btnNextLesson = document.getElementById("btnNextLesson");
@@ -589,9 +589,26 @@
         };
         const msg = document.createElement("div");
         msg.className = "user-message";
-        msg.innerHTML = `<strong>You:</strong> ${command} ${
-          Object.keys(parameters).length ? JSON.stringify(parameters) : ""
-        }`;
+
+        function prettyParams(obj) {
+          if (!obj || typeof obj !== "object") return "";
+          const lines = [];
+          for (const [k, v] of Object.entries(obj)) {
+            if (k === "image_b64" || k === "image_data" || k === "image") {
+              lines.push(
+                `${k}: [image ${Math.round((v?.length || 0) / 1024)} KB]`
+              );
+            } else if (typeof v === "string") {
+              lines.push(`${k}: ${v}`);
+            } else {
+              lines.push(`${k}: ${JSON.stringify(v)}`);
+            }
+          }
+          return lines.join("\n");
+        }
+
+        const pretty = prettyParams(parameters);
+        msg.textContent = `You: ${command}${pretty ? `\n${pretty}` : ""}`;
         chatContainer.appendChild(msg);
 
         try {
@@ -602,7 +619,7 @@
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
-          rawOutputDiv.textContent = JSON.stringify(data, null, 2);
+          // rawOutputDiv.textContent = JSON.stringify(data, null, 2);
           dynamicInputArea.innerHTML = ""; // cleared after each response
           pendingInputMeta = null; // clear meta so we don’t misroute next time
 
@@ -828,10 +845,12 @@
               <canvas id="${p.variable_name}_canvas" width="320" height="180" style="border:1px solid var(--border);background:#fff;border-radius:8px"></canvas>
               <input type="hidden" id="${p.variable_name}_image_data" value="">
               <button class="btn btn-gold" onclick="
-                const c=document.getElementById('${p.variable_name}_canvas');
-                const d=c.toDataURL('image/png');
-                document.getElementById('${p.variable_name}_image_data').value=d;
-                handleUserInput('${p.variable_name}','drawing_board');">Submit Drawing</button>`;
+              const c=document.getElementById('${p.variable_name}_canvas');
+              const dataUrl=c.toDataURL('image/png'); // 'data:image/png;base64,....'
+              const b64=(dataUrl.split(',')[1]||'').trim(); // raw base64 only
+              document.getElementById('${p.variable_name}_image_data').value=b64;
+              handleUserInput('${p.variable_name}','drawing_board');
+            ">Submit Drawing</button>`;
             const canvas = document.getElementById(`${p.variable_name}_canvas`);
             const ctx = canvas.getContext("2d");
             let isDrawing = false;
@@ -1049,62 +1068,62 @@
       }
 
       // Spellbook: local UI test without LLM
-      spellbook.addEventListener("click", (e) => {
-        const b = e.target.closest("button[data-spell]");
-        if (!b) return;
-        const s = b.dataset.spell;
-        const fake = (cmd, params) =>
-          renderUICommand({ command: cmd, parameters: params || {} });
-        if (s === "notes")
-          fake("ui_display_notes", {
-            content:
-              "### Ancient Note\nThis is a parchment-style note with ink bleed and creases.",
-          });
-        if (s === "short")
-          fake("ui_short_answer", {
-            question_text: "Write a sentence about gravity.",
-            variable_name: "test_short",
-            placeholder: "Your thought...",
-          });
-        if (s === "short-math")
-          fake("ui_short_answer", {
-            question_text:
-              "Compute 3x + 2 = 11. Solve for x. Use the math keypad.",
-            variable_name: "test_short_math",
-            placeholder: "x = ...",
-            hints: { math_input: true },
-          });
-        if (s === "mcq")
-          fake("ui_mcq", {
-            question_text: "Which is prime?",
-            options: ["12", "15", "17"],
-            variable_name: "test_mcq",
-          });
-        if (s === "checkbox")
-          fake("ui_checkbox", {
-            question_text: "Select all even numbers:",
-            options: ["2", "3", "6", "9"],
-            variable_name: "test_cbx",
-          });
-        if (s === "slider")
-          fake("ui_slider", {
-            question_text: "How confident are you? (demo)",
-            min: 1,
-            max: 10,
-            variable_name: "test_slider",
-          });
-        if (s === "rearrange")
-          fake("ui_rearrange_order", {
-            question_text: "Put in ascending order:",
-            items: ["7", "2", "9", "4"],
-            variable_name: "test_reorder",
-          });
-        if (s === "draw")
-          fake("ui_drawing_board", {
-            prompt_text: "Sketch a right triangle.",
-            variable_name: "test_drawing",
-          });
-      });
+      // spellbook.addEventListener("click", (e) => {
+      //   const b = e.target.closest("button[data-spell]");
+      //   if (!b) return;
+      //   const s = b.dataset.spell;
+      //   const fake = (cmd, params) =>
+      //     renderUICommand({ command: cmd, parameters: params || {} });
+      //   if (s === "notes")
+      //     fake("ui_display_notes", {
+      //       content:
+      //         "### Ancient Note\nThis is a parchment-style note with ink bleed and creases.",
+      //     });
+      //   if (s === "short")
+      //     fake("ui_short_answer", {
+      //       question_text: "Write a sentence about gravity.",
+      //       variable_name: "test_short",
+      //       placeholder: "Your thought...",
+      //     });
+      //   if (s === "short-math")
+      //     fake("ui_short_answer", {
+      //       question_text:
+      //         "Compute 3x + 2 = 11. Solve for x. Use the math keypad.",
+      //       variable_name: "test_short_math",
+      //       placeholder: "x = ...",
+      //       hints: { math_input: true },
+      //     });
+      //   if (s === "mcq")
+      //     fake("ui_mcq", {
+      //       question_text: "Which is prime?",
+      //       options: ["12", "15", "17"],
+      //       variable_name: "test_mcq",
+      //     });
+      //   if (s === "checkbox")
+      //     fake("ui_checkbox", {
+      //       question_text: "Select all even numbers:",
+      //       options: ["2", "3", "6", "9"],
+      //       variable_name: "test_cbx",
+      //     });
+      //   if (s === "slider")
+      //     fake("ui_slider", {
+      //       question_text: "How confident are you? (demo)",
+      //       min: 1,
+      //       max: 10,
+      //       variable_name: "test_slider",
+      //     });
+      //   if (s === "rearrange")
+      //     fake("ui_rearrange_order", {
+      //       question_text: "Put in ascending order:",
+      //       items: ["7", "2", "9", "4"],
+      //       variable_name: "test_reorder",
+      //     });
+      //   if (s === "draw")
+      //     fake("ui_drawing_board", {
+      //       prompt_text: "Sketch a right triangle.",
+      //       variable_name: "test_drawing",
+      //     });
+      // });
 
       // Init
       window.onload = () => {
@@ -1115,7 +1134,7 @@
         const subtopic = getQueryParam("subtopic") || "";
         sendActionToBackend("init", {
           user_name: userName,
-          generate_course_plan: subtopic + "start planing",
+          generate_course_plan: subtopic,
         });
         // sendActionToBackend("generate_course_plan", {
         //   query: [topic, subtopic].filter(Boolean).join(": "),
