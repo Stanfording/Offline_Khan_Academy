@@ -5,13 +5,13 @@
     "icon": "🧮",
     "sub_topics": [
       "Pre-K through grade 2 (Khan Kids)",
-      "2nd grade",
-      "3rd grade",
-      "4th grade",
-      "5th grade",
-      "6th grade",
-      "7th grade",
-      "8th grade"
+      "2nd grade math",
+      "3rd grade math",
+      "4th grade math",
+      "5th grade math",
+      "6th grade math",
+      "7th grade math",
+      "8th grade math"
     ]
   },
   {
@@ -40,8 +40,8 @@
     "title": "Reading & language arts",
     "icon": "📖",
     "sub_topics": [
-      "Up to 2nd grade (Khan Kids)",
-      "3rd grade",
+      "Up to 2nd grade (Khan Kids) - reading_language_arts",
+      "3rd grade - reading_language_arts",
       "4th grade reading and vocab",
       "5th grade reading and vocab",
       "6th grade reading and vocab",

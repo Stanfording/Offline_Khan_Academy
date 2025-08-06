@@ -942,6 +942,10 @@
         rec.addEventListener("error", () => micBtn.classList.remove("active"));
       }
 
+      function getQueryParam(k) {
+        return new URLSearchParams(window.location.search).get(k);
+      }
+
       // Route submission using pendingInputMeta first
       function handleUserInput(variableName, inputType) {
         let value;
@@ -1106,13 +1110,16 @@
       window.onload = () => {
         const userName =
           prompt("Welcome! What's your name, learner?") || "Learner";
+
         const topic = getQueryParam("topic") || "";
         const subtopic = getQueryParam("subtopic") || "";
         sendActionToBackend("init", {
           user_name: userName,
-          topic: topic,
-          subtopic: subtopic,
+          generate_course_plan: subtopic + "start planing",
         });
+        // sendActionToBackend("generate_course_plan", {
+        //   query: [topic, subtopic].filter(Boolean).join(": "),
+        // });
         updateProgressBar(currentStatus.current_lesson_progress);
         updateToolbarButtons();
       };

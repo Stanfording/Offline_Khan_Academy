@@ -20,7 +20,7 @@ OLLAMA_PERSIST_DIR = os.getenv("OLLAMA_PERSIST_DIR", None)
 OLLAMA_MAX_TURNS = int(os.getenv("OLLAMA_MAX_TURNS", "6"))
 OLLAMA_SUMMARIZE_AFTER = int(os.getenv("OLLAMA_SUMMARIZE_AFTER", "8"))
 
-PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompt3_1.txt")
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompt3_2.txt")
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     base_prompt = f.read()
 
