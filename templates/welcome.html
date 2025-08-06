@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --fade-duration: 900ms;
+        --hold-duration: 2200ms; /* how long to show before fade */
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background: #0b0a07;
+        overflow: hidden;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+      .splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #0b0a07;
+        animation: hold var(--hold-duration) linear 1 forwards,
+          fadeOut var(--fade-duration) ease-in var(--hold-duration) 1 forwards;
+        z-index: 2;
+      }
+      .splash img {
+        max-width: 86vw;
+        max-height: 86vh;
+        border-radius: 8px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transform: scale(0.985);
+        animation: fadeIn 900ms ease-out 150ms forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes hold {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+        }
+      }
+
+      /* Home iframe fills screen and is revealed after fade */
+      .home {
+        position: fixed;
+        inset: 0;
+        border: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity var(--fade-duration) ease-in;
+        z-index: 1;
+      }
+      .home.ready {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="splash" id="splash">
+      <img
+        src="/Users/Stanford/Desktop/Cay/Offline_Khan_Academy/welcome.png"
+        alt="Welcome to the School of Wonders!"
+      />
+    </div>
+    <iframe class="home" id="home" src="/"></iframe>
+
+    <script>
+      // Ensure home is loaded, then reveal after splash fades
+      const splash = document.getElementById("splash");
+      const home = document.getElementById("home");
+
+      // When iframe loads, we wait for splash animation to finish, then reveal
+      function revealHome() {
+        home.classList.add("ready");
+        // Remove splash from the tree after transition buffer
+        setTimeout(() => splash.remove(), 900);
+      }
+
+      home.addEventListener("load", () => {
+        // Sync with CSS animation timing: hold + fade
+        const total = 2200 + 900; // match CSS vars if changed
+        setTimeout(revealHome, total);
+      });
+    </script>
+  </body>
+</html>

@@ -1,106 +1,424 @@
-<!-- templates/home.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Offline AI Academy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School of Wonders</title>
+    <!-- <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Kalam:wght@400;700&display=swap"
+      rel="stylesheet"
+    /> -->
     <style>
+      /* Local fonts: Kalam (400,700) and Caveat (700) */
+      @font-face {
+        font-family: "Kalam";
+        src: url('{{ url_for("static", filename="fonts/Kalam-Regular.woff2") }}')
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Kalam";
+        src: url('{{ url_for("static", filename="fonts/Kalam-Bold.woff2") }}')
+          format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Caveat";
+        src: url('{{ url_for("static", filename="fonts/Caveat-Bold.woff2") }}')
+          format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      :root {
+        --parchment: #efe2bf;
+        --parchment-deep: #e6d5a6;
+        --ink: #2b2622;
+        --sepia: #5a3f25;
+        --border: #b99b64;
+        --gold: #a77b2b;
+        --shadow: rgba(0, 0, 0, 0.22);
+        --shadow2: rgba(0, 0, 0, 0.1);
+      }
+
+      html,
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
-        margin: 40px;
-        background-color: #f0f2f5;
-        color: #1c1d1f;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Kalam", "Caveat", "Inter", system-ui, -apple-system,
+          Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(0, 0, 0, 0.2) 65%,
+            rgba(0, 0, 0, 0.35) 100%
+          ),
+          /* url("https://i.imgur.com/o7r6n0E.jpg") center/cover fixed,
+          url("https://i.imgur.com/0H0bq3W.png") repeat fixed,
+          url("https://i.imgur.com/3n1m3Vw.png") center/cover fixed, */
+            linear-gradient(var(--parchment), var(--parchment-deep));
+        background-blend-mode: multiply, multiply, overlay, multiply, normal;
+        overflow-x: hidden;
+      }
+
+      .page-wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 22px 16px 40px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .notebook {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        background: rgba(255, 252, 243, 0.9);
+        border: 2px solid var(--border);
+        box-shadow: 0 22px 60px var(--shadow), 0 4px 12px var(--shadow2);
+      }
+      /* .notebook::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: url("https://i.imgur.com/Q6cZ7Db.png") repeat;
+        mix-blend-mode: multiply;
+        opacity: 0.3;
+      }
+      .notebook::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: url("https://i.imgur.com/Fr6YxKQ.png") center/cover,
+          radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 0) 65%,
+            rgba(0, 0, 0, 0.18) 100%
+          );
+        mix-blend-mode: multiply;
+        opacity: 0.45;
+      } */
+
+      .ornate-frame {
+        position: relative;
+        margin: 12px;
+        border: 1px solid rgba(90, 63, 37, 0.45);
+        border-radius: 16px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.92),
+          rgba(255, 255, 255, 0.82)
+        );
+      }
+      .ornate-frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 12px solid rgba(167, 123, 43, 0.15);
+        border-radius: 16px;
+        pointer-events: none;
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.08);
+      }
+
+      header {
+        padding: 18px 16px 10px;
+        text-align: center;
+        border-bottom: 1px dashed var(--border);
       }
       h1 {
-        color: #007bff;
+        margin: 6px 0 6px;
+        color: var(--sepia);
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        font-size: 2.2rem;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
       }
-      p {
-        margin-bottom: 20px;
+      .subtitle {
+        color: #6a5337;
+        font-style: italic;
+        margin-bottom: 6px;
       }
+
       .grid-container {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 18px;
+        padding: 18px;
       }
+
       .course-card {
-        background-color: #fff;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        padding: 25px;
+        position: relative;
+        background: #fffaf0;
+        border: 1px solid rgba(185, 155, 100, 0.6);
+        border-radius: 14px;
+        padding: 16px 16px 10px;
+        color: var(--ink);
         text-decoration: none;
-        color: #1c1d1f;
-        transition: box-shadow 0.2s, transform 0.2s;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 120px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: transform 0.12s ease, box-shadow 0.2s ease,
+          border-color 0.2s ease;
+        cursor: pointer;
       }
       .course-card:hover {
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        transform: translateY(-3px);
+        transform: translateY(-2px);
+        border-color: var(--gold);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
       }
-      .course-card h3 {
-        margin-top: 0;
-        font-size: 20px;
+      .course-header {
         display: flex;
         align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
       }
-      .course-card h3 span {
-        margin-right: 10px;
-        font-size: 28px;
+      .category-icon {
+        font-size: 32px;
+        filter: drop-shadow(0 0 4px rgba(167, 123, 43, 0.35));
       }
-      .course-card p {
-        font-size: 14px;
-        color: #555;
-        margin-bottom: 0;
+      .course-title {
+        font-weight: 700;
+        color: var(--sepia);
+        font-size: 1.1rem;
+      }
+      .course-description {
+        font-size: 0.95rem;
+        color: #5a4b3a;
+        margin: 4px 0 8px;
+      }
+
+      .expand-btn {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 6px 10px;
+        background: #fff3d3;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--sepia);
+        font-size: 0.9rem;
+        transition: background 0.2s ease;
+      }
+      .expand-btn:hover {
+        background: #ffedbf;
+      }
+
+      .sub-topics {
+        margin-top: 10px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, padding 0.3s ease;
+        padding-top: 0;
+      }
+      .course-card.expanded .sub-topics {
+        max-height: 480px;
+        padding-top: 8px;
+      }
+      .sub-topic-item {
+        display: block;
+        text-decoration: none;
+        color: var(--ink);
+        background: #fffdf6;
+        border-left: 4px solid rgba(185, 155, 100, 0.6);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 6px 0;
+        transition: background 0.2s ease, transform 0.1s ease,
+          border-color 0.2s ease;
+      }
+      .sub-topic-item:hover {
+        background: #fff3d3;
+        transform: translateX(4px);
+        border-left-color: var(--gold);
+      }
+
+      /* Fullscreen splash */
+      .splash {
+        /* padding-top: 10; */
+        position: relative;
+        inset: 0;
+        width: 100vw;
+        height: 120vh;
+        background: #0b0a07;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+      }
+      .splash.visible {
+        opacity: 1;
+      }
+      .splash.fade-out {
+        opacity: 0;
+      }
+      .splash-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+
+      /* Particles (subtle) */
+      .magic-particles {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .particle {
+        position: absolute;
+        background: radial-gradient(
+          circle,
+          rgba(167, 123, 43, 0.8) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        animation: float-particle 18s infinite linear;
+        opacity: 0.6;
+      }
+      @keyframes float-particle {
+        0% {
+          transform: translateY(100vh) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.8;
+        }
+        90% {
+          opacity: 0.6;
+        }
+        100% {
+          transform: translateY(-100vh) rotate(360deg);
+          opacity: 0;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>Offline AI Academy Courses</h1>
-    <p>
-      Select a topic to start your personalized learning journey with Mr.
-      Delight.
-    </p>
-    <div id="course-grid" class="grid-container"></div>
+    <!-- Splash -->
+    <div id="splash" class="splash visible">
+      <img
+        src="{{ url_for('static', filename='assets/welcome.png') }}"
+        alt="Welcome"
+        class="splash-img"
+      />
+    </div>
+
+    <!-- Subtle particles -->
+    <div class="magic-particles" id="particles"></div>
+
+    <div class="page-wrap">
+      <div class="notebook">
+        <div class="ornate-frame">
+          <header>
+            <h1>Welcome to the School of Wonders!</h1>
+            <div class="subtitle">
+              Choose your path and let the ink guide you.
+            </div>
+          </header>
+
+          <div id="course-grid" class="grid-container" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
 
     <script>
+      // particles
+      function createParticles() {
+        const container = document.getElementById("particles");
+        for (let i = 0; i < 16; i++) {
+          const p = document.createElement("div");
+          p.className = "particle";
+          const size = Math.random() * 5 + 3;
+          p.style.width = size + "px";
+          p.style.height = size + "px";
+          p.style.left = Math.random() * 100 + "%";
+          p.style.animationDelay = Math.random() * 18 + "s";
+          p.style.animationDuration = Math.random() * 12 + 16 + "s";
+          container.appendChild(p);
+        }
+      }
+
+      // splash fade
+      window.addEventListener("load", () => {
+        createParticles();
+        setTimeout(() => {
+          const splash = document.getElementById("splash");
+          if (!splash) return;
+          splash.classList.add("fade-out");
+          setTimeout(() => {
+            splash.style.display = "none";
+          }, 600);
+        }, 1000);
+      });
+
+      // build cards with expandable sub-topics
       document.addEventListener("DOMContentLoaded", async () => {
         const grid = document.getElementById("course-grid");
         try {
-          const response = await fetch("/api/courses");
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const courses = await response.json();
+          const res = await fetch("/api/courses");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const courses = await res.json();
 
           courses.forEach((category) => {
-            const card = document.createElement("a");
+            const card = document.createElement("div");
             card.className = "course-card";
-            // Generate a new UUID for each session when entering a classroom
-            const newSessionId = crypto.randomUUID();
-            card.href = `/classroom?topic=${encodeURIComponent(
-              category.title
-            )}&session_id=${newSessionId}`;
+            card.dataset.categoryId = category.category_id;
+
+            const subLinks = category.sub_topics
+              .map(
+                (topic) => `
+                <a href="/classroom?topic=${encodeURIComponent(
+                  category.title
+                )}&subtopic=${encodeURIComponent(
+                  topic
+                )}&session_id=${crypto.randomUUID()}"
+                   class="sub-topic-item" onclick="event.stopPropagation()">
+                   • ${topic}
+                </a>`
+              )
+              .join("");
+
             card.innerHTML = `
-                        <h3><span class="category-icon">${
-                          category.icon
-                        }</span>${category.title}</h3>
-                        <p>Explore sub-topics like: ${category.sub_topics
-                          .slice(0, 3)
-                          .join(", ")}${
-              category.sub_topics.length > 3 ? "..." : ""
-            }</p>
-                    `;
+              <div class="course-header">
+                <span class="category-icon">${category.icon}</span>
+                <span class="course-title">${category.title}</span>
+              </div>
+              <div class="course-description">
+                Explore chapters within ${category.title.toLowerCase()} inscribed on ancient pages.
+              </div>
+              <button class="expand-btn" type="button">Open Topics</button>
+              <div class="sub-topics">${subLinks}</div>
+            `;
+
+            // toggle expand
+            const btn = card.querySelector(".expand-btn");
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const expanded = card.classList.toggle("expanded");
+              btn.textContent = expanded ? "Hide Topics" : "Open Topics";
+            });
+
+            // clicking the card goes to the main topic (kept from your original behavior)
+            card.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const expanded = card.classList.toggle("expanded");
+              btn.textContent = expanded ? "Hide Topics" : "Open Topics";
+            });
+
             grid.appendChild(card);
           });
-        } catch (error) {
-          console.error("Failed to load courses:", error);
-          grid.innerHTML =
-            '<p style="color: red;">Failed to load courses. Please check the server.</p>';
+        } catch (err) {
+          grid.innerHTML = `<div style="padding:16px; color:#8b1e1e;">Failed to load courses. Please check the server.</div>`;
         }
       });
     </script>

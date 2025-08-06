@@ -6,14 +6,38 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <title>The Magic Notebook</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <title>Your Magical Notebook</title>
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Kalam:wght@400;700&display=swap"
       rel="stylesheet"
-    />
+    /> -->
 
     <style>
+      @font-face {
+        font-family: "Kalam";
+        src: url('{{ url_for("static", filename="fonts/Kalam-Regular.woff2") }}')
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Kalam";
+        src: url('{{ url_for("static", filename="fonts/Kalam-Bold.woff2") }}')
+          format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Caveat";
+        src: url('{{ url_for("static", filename="fonts/Caveat-Bold.woff2") }}')
+          format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
       :root {
         --parchment: #efe2bf;
         --parchment-deep: #e6d5a6;
@@ -40,10 +64,10 @@
             rgba(0, 0, 0, 0.2) 65%,
             rgba(0, 0, 0, 0.35) 100%
           ),
-          url("https://i.imgur.com/o7r6n0E.jpg") center/cover fixed,
-          /* burnt edges vignette */ url("https://i.imgur.com/0H0bq3W.png")
-            repeat fixed,
-          /* heavy paper grain */ url("https://i.imgur.com/3n1m3Vw.png")
+          /* url("https://i.imgur.com/o7r6n0E.jpg") center/cover fixed, */
+            /* burnt edges vignette */
+            /* url("https://i.imgur.com/0H0bq3W.png") */ repeat fixed,
+          /* heavy paper grain */ /* url("https://i.imgur.com/3n1m3Vw.png") */
             center/cover fixed,
           /* crease/wrinkle overlay */
             linear-gradient(var(--parchment), var(--parchment-deep));
@@ -78,7 +102,7 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: url("https://i.imgur.com/Q6cZ7Db.png") repeat; /* fine grain */
+        /* background: url("https://i.imgur.com/Q6cZ7Db.png") repeat; fine grain */
         mix-blend-mode: multiply;
         opacity: 0.3;
       }
@@ -87,13 +111,13 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: url("https://i.imgur.com/Fr6YxKQ.png") center/cover,
-          /* torn edges/ink bleed */
-            radial-gradient(
-              ellipse at center,
-              rgba(0, 0, 0, 0) 65%,
-              rgba(0, 0, 0, 0.18) 100%
-            );
+        background: 
+        /* url("https://i.imgur.com/Fr6YxKQ.png") center/cover, */
+          /* torn edges/ink bleed */ radial-gradient(
+          ellipse at center,
+          rgba(0, 0, 0, 0) 65%,
+          rgba(0, 0, 0, 0.18) 100%
+        );
         mix-blend-mode: multiply;
         opacity: 0.45;
       }
@@ -382,11 +406,11 @@
         font-size: 0.9rem;
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
   </head>
   <body>
     <div class="page-wrap">
-      <h1>The Magic Notebook ✨</h1>
+      <h1>Your Magical Notebook ✨</h1>
       <div class="notebook">
         <div class="ornate-frame">
           <div class="notebook-header">
@@ -1082,7 +1106,13 @@
       window.onload = () => {
         const userName =
           prompt("Welcome! What's your name, learner?") || "Learner";
-        sendActionToBackend("init", { user_name: userName });
+        const topic = getQueryParam("topic") || "";
+        const subtopic = getQueryParam("subtopic") || "";
+        sendActionToBackend("init", {
+          user_name: userName,
+          topic: topic,
+          subtopic: subtopic,
+        });
         updateProgressBar(currentStatus.current_lesson_progress);
         updateToolbarButtons();
       };

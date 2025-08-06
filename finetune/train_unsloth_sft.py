@@ -30,12 +30,12 @@ DEV_PATH   = os.getenv("DEV_PATH",   "mn_dataset_out_v6_trust/clean/dev_chains.j
 
 # Training Hyperparameters
 SEED = int(os.getenv("SEED", "42"))
-MAX_SEQ_LEN = int(os.getenv("MAX_SEQ_LEN", "2048"))
+MAX_SEQ_LEN = int(os.getenv("MAX_SEQ_LEN", "8192"))
 PER_DEVICE_BS = int(os.getenv("BATCH_SIZE", "1"))
 GRAD_ACCUM = int(os.getenv("GRAD_ACCUM", "16"))
-LR = float(os.getenv("LR", "2e-5"))
+LR = float(os.getenv("LR", "5e-6"))
 EPOCHS = float(os.getenv("EPOCHS", "2.0"))
-WD = float(os.getenv("WEIGHT_DECAY", "0.0"))
+WD = float(os.getenv("WEIGHT_DECAY", "0.1"))
 WARMUP_RATIO = float(os.getenv("WARMUP_RATIO", "0.03"))
 BF16 = os.getenv("BF16", "true").lower() == "true"
 USE_QLORA = os.getenv("USE_QLORA", "true").lower() == "true"
@@ -46,7 +46,7 @@ MASK_PROMPT_LOSS = os.getenv("MASK_PROMPT_LOSS", "true").lower() == "true"
 LORA_R = int(os.getenv("LORA_R", "16"))
 LORA_ALPHA = int(os.getenv("LORA_ALPHA", "32"))
 LORA_DROPOUT = float(os.getenv("LORA_DROPOUT", "0.05"))
-LORA_TARGETS = os.getenv("LORA_TARGETS", "").strip()
+LORA_TARGETS = ""#["q_proj","k_proj","v_proj","o_proj"] #os.getenv("LORA_TARGETS", "q_proj,k_proj,v_proj,o_proj").strip()
 
 # Logging & Saving
 LOGGING_STEPS = int(os.getenv("LOGGING_STEPS", "20"))
@@ -159,14 +159,28 @@ class CustomDataCollator:
 # 3. Main Training Orchestration
 # ==============================================================================
 def main():
+
+    def get_local_rank():
+        lr = os.environ.get("LOCAL_RANK")
+        return int(lr) if lr is not None else 0
+
+    def set_device_from_local_rank():
+        local_rank = get_local_rank()
+        if torch.cuda.is_available():
+            torch.cuda.set_device(local_rank)
+            print(f"[PID {os.getpid()}] RANK={os.environ.get('RANK')} LOCAL_RANK={local_rank} "
+                  f"WORLD_SIZE={os.environ.get('WORLD_SIZE')} -> cuda:{local_rank}")
+    
+    # In main() as the first thing after seeding:
+    set_device_from_local_rank()
     seed_all(SEED)
 
     # --- Data Loading and Preparation ---
     train_chats, dev_chats = build_chat_dataset(TRAIN_PATH, DEV_PATH, system_prompt_path="distilled_prompt.txt")
 
     
-    train_ds = Dataset.from_list(train_chats).filter(example_is_valid, num_proc=1)
-    eval_ds = Dataset.from_list(dev_chats).filter(example_is_valid, num_proc=1)
+    train_ds = Dataset.from_list(train_chats).filter(example_is_valid, num_proc=8)
+    eval_ds = Dataset.from_list(dev_chats).filter(example_is_valid, num_proc=8)
     
     print(f"Train conversations after filter: {len(train_ds)}")
     print(f"Eval conversations after filter: {len(eval_ds)}")
@@ -205,7 +219,8 @@ def main():
     args = TrainingArguments(
         per_device_train_batch_size=PER_DEVICE_BS,
         gradient_accumulation_steps=GRAD_ACCUM,
-        warmup_ratio=WARMUP_RATIO,
+        # warmup_ratio=WARMUP_RATIO,
+        warmup_steps=400,
         num_train_epochs=EPOCHS,
         learning_rate=LR,
         weight_decay=WD,
@@ -221,6 +236,7 @@ def main():
         eval_strategy="steps",
         eval_steps=steps_per_epoch, # Evaluate every epoch
         ddp_find_unused_parameters=False,
+        max_grad_norm=0.5,
         report_to=REPORT_TO,
     )
 
