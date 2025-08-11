@@ -133,7 +133,7 @@ class OllamaProvider(ModelProvider):
             logger.warning(f"Failed to persist Ollama session {session_id}: {e}")
 
     def _post_chat(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        r = requests.post(self.chat_url, json=payload, timeout=120)
+        r = requests.post(self.chat_url, json=payload, timeout=12000)
         r.raise_for_status()
         return r.json()
 

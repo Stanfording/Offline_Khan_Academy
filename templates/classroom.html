@@ -338,7 +338,7 @@
         justify-content: center;
         background: rgba(255, 250, 240, 0.86);
       }
-      /* .raw-json-output {
+      .raw-json-output {
         background: #fff7ea;
         padding: 10px;
         border-top: 1px dashed var(--border);
@@ -347,7 +347,7 @@
         max-height: 150px;
         overflow: auto;
         color: #5a554d;
-      } */
+      }
 
       .user-message {
         text-align: right;
@@ -394,7 +394,7 @@
       }
 
       /* Spellbook test panel */
-      /* .spellbook {
+      .spellbook {
         padding: 8px 14px;
         border-top: 1px dashed var(--border);
         background: rgba(255, 252, 240, 0.8);
@@ -404,7 +404,7 @@
       }
       .spellbook .btn {
         font-size: 0.9rem;
-      }  */
+      }
     </style>
     <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
   </head>
@@ -441,7 +441,7 @@
           <div class="content">
             <div class="chat-container" id="chatContainer"></div>
             <div id="dynamicInputArea" class="input-area"></div>
-            <!-- <div class="spellbook" id="spellbook">
+            <div class="spellbook" id="spellbook">
               <span style="font-weight: 700; color: var(--sepia)"
                 >Spellbook (UI test):</span
               >
@@ -455,15 +455,15 @@
               <button class="btn" data-spell="slider">Slider</button>
               <button class="btn" data-spell="rearrange">Rearrange</button>
               <button class="btn" data-spell="draw">Drawing</button>
-            </div> -->
+            </div>
             <div
               id="persistentButtonsArea"
               class="persistent-buttons-area"
             ></div>
-            <!-- <div class="raw-json-output">
+            <div class="raw-json-output">
               <strong>Raw LLM Response (debug):</strong>
               <pre id="rawOutput"></pre>
-            </div> -->
+            </div>
           </div>
         </div>
       </div>
@@ -479,7 +479,7 @@
         "toggleTypewriterBtn"
       );
       const speakSelectionBtn = document.getElementById("speakSelectionBtn");
-      // const spellbook = document.getElementById("spellbook");
+      const spellbook = document.getElementById("spellbook");
 
       const btnFeedback = document.getElementById("btnFeedback");
       const btnNextLesson = document.getElementById("btnNextLesson");
@@ -1068,62 +1068,62 @@
       }
 
       // Spellbook: local UI test without LLM
-      // spellbook.addEventListener("click", (e) => {
-      //   const b = e.target.closest("button[data-spell]");
-      //   if (!b) return;
-      //   const s = b.dataset.spell;
-      //   const fake = (cmd, params) =>
-      //     renderUICommand({ command: cmd, parameters: params || {} });
-      //   if (s === "notes")
-      //     fake("ui_display_notes", {
-      //       content:
-      //         "### Ancient Note\nThis is a parchment-style note with ink bleed and creases.",
-      //     });
-      //   if (s === "short")
-      //     fake("ui_short_answer", {
-      //       question_text: "Write a sentence about gravity.",
-      //       variable_name: "test_short",
-      //       placeholder: "Your thought...",
-      //     });
-      //   if (s === "short-math")
-      //     fake("ui_short_answer", {
-      //       question_text:
-      //         "Compute 3x + 2 = 11. Solve for x. Use the math keypad.",
-      //       variable_name: "test_short_math",
-      //       placeholder: "x = ...",
-      //       hints: { math_input: true },
-      //     });
-      //   if (s === "mcq")
-      //     fake("ui_mcq", {
-      //       question_text: "Which is prime?",
-      //       options: ["12", "15", "17"],
-      //       variable_name: "test_mcq",
-      //     });
-      //   if (s === "checkbox")
-      //     fake("ui_checkbox", {
-      //       question_text: "Select all even numbers:",
-      //       options: ["2", "3", "6", "9"],
-      //       variable_name: "test_cbx",
-      //     });
-      //   if (s === "slider")
-      //     fake("ui_slider", {
-      //       question_text: "How confident are you? (demo)",
-      //       min: 1,
-      //       max: 10,
-      //       variable_name: "test_slider",
-      //     });
-      //   if (s === "rearrange")
-      //     fake("ui_rearrange_order", {
-      //       question_text: "Put in ascending order:",
-      //       items: ["7", "2", "9", "4"],
-      //       variable_name: "test_reorder",
-      //     });
-      //   if (s === "draw")
-      //     fake("ui_drawing_board", {
-      //       prompt_text: "Sketch a right triangle.",
-      //       variable_name: "test_drawing",
-      //     });
-      // });
+      spellbook.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-spell]");
+        if (!b) return;
+        const s = b.dataset.spell;
+        const fake = (cmd, params) =>
+          renderUICommand({ command: cmd, parameters: params || {} });
+        if (s === "notes")
+          fake("ui_display_notes", {
+            content:
+              "### Ancient Note\nThis is a parchment-style note with ink bleed and creases.",
+          });
+        if (s === "short")
+          fake("ui_short_answer", {
+            question_text: "Write a sentence about gravity.",
+            variable_name: "test_short",
+            placeholder: "Your thought...",
+          });
+        if (s === "short-math")
+          fake("ui_short_answer", {
+            question_text:
+              "Compute 3x + 2 = 11. Solve for x. Use the math keypad.",
+            variable_name: "test_short_math",
+            placeholder: "x = ...",
+            hints: { math_input: true },
+          });
+        if (s === "mcq")
+          fake("ui_mcq", {
+            question_text: "Which is prime?",
+            options: ["12", "15", "17"],
+            variable_name: "test_mcq",
+          });
+        if (s === "checkbox")
+          fake("ui_checkbox", {
+            question_text: "Select all even numbers:",
+            options: ["2", "3", "6", "9"],
+            variable_name: "test_cbx",
+          });
+        if (s === "slider")
+          fake("ui_slider", {
+            question_text: "How confident are you? (demo)",
+            min: 1,
+            max: 10,
+            variable_name: "test_slider",
+          });
+        if (s === "rearrange")
+          fake("ui_rearrange_order", {
+            question_text: "Put in ascending order:",
+            items: ["7", "2", "9", "4"],
+            variable_name: "test_reorder",
+          });
+        if (s === "draw")
+          fake("ui_drawing_board", {
+            prompt_text: "Sketch a right triangle.",
+            variable_name: "test_drawing",
+          });
+      });
 
       // Init
       window.onload = () => {

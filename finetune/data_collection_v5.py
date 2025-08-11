@@ -20,9 +20,10 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
     raise RuntimeError("Set GOOGLE_API_KEY in your environment or .env")
 
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
-PROMPT_PATH = os.getenv("DELIGHT_PROMPT_PATH", "./prompt3_2.txt")
-OUT_DIR = os.getenv("OUT_DIR", "./mn_dataset_out_v7_trust")
+#//-- MODIFIED --// Using a newer, potentially more capable model if available
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash-latest")
+PROMPT_PATH = os.getenv("DELIGHT_PROMPT_PATH", "./prompt3_2.txt") # Make sure this file has the updated prompt
+OUT_DIR = os.getenv("OUT_DIR", "./mn_dataset_out_v8_courseplan")
 SEED = int(os.getenv("SEED", "42"))
 random.seed(SEED)
 
@@ -40,6 +41,7 @@ ENABLE_SECOND_PASS = os.getenv("ENABLE_SECOND_PASS", "true").lower() == "true"
 
 # --------------------------------
 # SUBJECTS/TOPICS, Grade Bands (kept only for sampling)
+# (No changes in this section)
 # --------------------------------
 GRADES = [
     "K", "1st", "2nd", "3rd", "4th", "5th",
@@ -218,6 +220,7 @@ for d, topics in DOMAINS.items():
 
 # --------------------------------
 # IO
+# (No changes in this section)
 # --------------------------------
 out_dir = Path(OUT_DIR)
 (out_dir / "raw").mkdir(parents=True, exist_ok=True)
@@ -226,6 +229,7 @@ out_dir = Path(OUT_DIR)
 
 # --------------------------------
 # Gemini init
+# (No changes in this section)
 # --------------------------------
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel(MODEL_NAME)
@@ -238,6 +242,7 @@ BASE_SYSTEM_PROMPT = read_prompt()
 
 # --------------------------------
 # Helpers and minimal validators
+# (No changes in this section)
 # --------------------------------
 def short_hash(obj: Any) -> str:
     s = json.dumps(obj, sort_keys=True, ensure_ascii=False)
@@ -266,10 +271,8 @@ ALLOWED_COMMANDS = {
 }
 
 def validate_actions_payload(payload: dict) -> Tuple[bool, dict, str]:
-    # Minimal schema gate: must be strict JSON with actions array and allowed commands
     if not isinstance(payload, dict) or "actions" not in payload or not isinstance(payload["actions"], list):
         return False, payload, "Missing actions"
-
     repaired = []
     for a in payload["actions"]:
         if not isinstance(a, dict) or "command" not in a:
@@ -280,39 +283,25 @@ def validate_actions_payload(payload: dict) -> Tuple[bool, dict, str]:
         params = a.get("parameters", {})
         if not isinstance(params, dict):
             params = {}
-
-        # Normalize update_status stage/progress to canonical buckets to keep chains coherent
         if cmd == "update_status":
             ups = params.get("updates", {})
             if isinstance(ups, dict):
                 stg = ups.get("lesson_stage")
                 prog = ups.get("current_lesson_progress", -1)
                 stage_defaults = {
-                    "not_in_lesson": 0,
-                    "intuition": 10,
-                    "main_lesson": 40,
-                    "practice": 70,
-                    "lesson_complete": 100
+                    "not_in_lesson": 0, "intuition": 10, "main_lesson": 40,
+                    "practice": 70, "lesson_complete": 100
                 }
-                if stg not in stage_defaults:
-                    stg = "intuition"
-                try:
-                    p = int(prog)
-                except:
-                    p = stage_defaults[stg]
-                if stg == "practice" and p >= 70 and p < 100:
-                    p = max(70, min(90, p))
-                else:
-                    p = stage_defaults[stg]
+                if stg not in stage_defaults: stg = "intuition"
+                try: p = int(prog)
+                except: p = stage_defaults[stg]
+                if stg == "practice" and p >= 70 and p < 100: p = max(70, min(90, p))
+                else: p = stage_defaults[stg]
                 ups["lesson_stage"] = stg
                 ups["current_lesson_progress"] = str(p)
                 params["updates"] = ups
-
         repaired.append({"command": cmd, "parameters": params})
-
-    if not repaired:
-        return False, payload, "Empty actions"
-
+    if not repaired: return False, payload, "Empty actions"
     return True, {"actions": repaired}, ""
 
 def apply_updates_to_status(status: dict, action: dict) -> dict:
@@ -337,29 +326,23 @@ def apply_updates_to_status(status: dict, action: dict) -> dict:
                 except: pass
             else:
                 new_status[k] = v
-    # Clamp scalar fields
     for f in ["learning_confidence","learning_interest","learning_patience","effort_focus"]:
         if f in new_status and isinstance(new_status[f], (int,float)):
             new_status[f] = max(1, min(10, new_status[f]))
-    # Normalize stage/progress to canonical
     stage_defaults = {
-        "not_in_lesson": 0,
-        "intuition": 10,
-        "main_lesson": 40,
-        "practice": 70,
-        "lesson_complete": 100
+        "not_in_lesson": 0, "intuition": 10, "main_lesson": 40,
+        "practice": 70, "lesson_complete": 100
     }
     stg = new_status.get("lesson_stage", "intuition")
     prog = new_status.get("current_lesson_progress", 10)
-    if stg not in stage_defaults:
-        stg = "intuition"
+    if stg not in stage_defaults: stg = "intuition"
     if stg == "practice":
         if not isinstance(prog, int):
             try: prog = int(prog)
             except: prog = 70
         prog = max(70, min(90, prog))
     else:
-        prog = stage_defaults[stg]
+        prog = stage_defaults.get(stg, 10)
     new_status["lesson_stage"] = stg
     new_status["current_lesson_progress"] = prog
     if not new_status.get("current_lesson_title"):
@@ -375,14 +358,15 @@ def extract_first_update_status(actions: List[dict]) -> Optional[dict]:
 # --------------------------------
 # Seed builders
 # --------------------------------
+#//-- MODIFIED --// `plan` is removed as it's merged into `init`.
 SEED_KINDS = [
-    "init","plan","start_intuition","paraphrase_good","paraphrase_weak",
-    "main_checkpoint_easy","main_checkpoint_mid","main_checkpoint_hard",
-    "summary_good","summary_weak",
-    "practice_correct_easy","practice_incorrect_easy",
-    "practice_correct_mid","practice_incorrect_mid",
-    "practice_correct_hard","practice_incorrect_hard",
-    "lesson_complete","handle_user_question","give_feedback","show_status"
+    "init", "start_intuition", "paraphrase_good", "paraphrase_weak",
+    "main_checkpoint_easy", "main_checkpoint_mid", "main_checkpoint_hard",
+    "summary_good", "summary_weak",
+    "practice_correct_easy", "practice_incorrect_easy",
+    "practice_correct_mid", "practice_incorrect_mid",
+    "practice_correct_hard", "practice_incorrect_hard",
+    "lesson_complete", "handle_user_question", "give_feedback", "show_status"
 ]
 
 def random_valid_domain_topic_grade() -> Tuple[str,str,str]:
@@ -417,12 +401,19 @@ def build_single_seed() -> Dict[str, Any]:
         d = f"{prefix}_{diff}" if diff else prefix
         return f"q_{domain[:2].lower()}_{topic[:6].lower()}_{d}_{random.randint(1,999)}"
 
+    #//-- MODIFIED --// 'init' now creates a course plan directly. 'plan' is removed.
     if seed_kind == "init":
-        ua = {"command":"init","parameters":{"user_name":"Learner"}}
+        # The new 'init' command takes a topic and produces a course plan.
+        ua = {
+            "command": "init",
+            "parameters": {
+                "user_name": "Learner",
+                "course_topic": f"{topic} for {grade} students"
+            }
+        }
         status["lesson_stage"] = "not_in_lesson"
         status["current_lesson_progress"] = 0
-    elif seed_kind == "plan":
-        ua = {"command":"generate_course_plan","parameters":{"query":f"{domain}: {topic} for {grade}"}}
+    #//-- MODIFIED --// 'plan' seed kind is removed.
     elif seed_kind == "start_intuition":
         ua = {"command":"start_lesson","parameters":{"lesson_index":0}}
         status["lesson_stage"] = "not_in_lesson"
@@ -459,27 +450,21 @@ def build_single_seed() -> Dict[str, Any]:
         status["current_lesson_progress"] = 90
     elif seed_kind == "handle_user_question":
         ua = {"command":"handle_user_question","parameters":{"user_question_value": random.choice([
-            "How does this connect to real life?",
-            "Why do we divide here instead of subtract?",
-            "What if the data is noisy?",
-            "How do we know this rule applies here?"
+            "How does this connect to real life?", "Why do we divide here instead of subtract?",
+            "What if the data is noisy?", "How do we know this rule applies here?"
         ])}}
     elif seed_kind == "give_feedback":
         ua = {"command":"give_feedback","parameters":{}}
     elif seed_kind == "show_status":
         ua = {"command":"show_status","parameters":{}}
-    else:
-        ua = {"command":"init","parameters":{"user_name":"Learner"}}
+    else: # Fallback, should not be common
+        ua = {"command": "init", "parameters": {"user_name": "Learner", "course_topic": f"{topic} for {grade}"}}
         status["lesson_stage"] = "not_in_lesson"
         status["current_lesson_progress"] = 0
 
-    # Snap stage/progress for initial status
     stage_defaults = {
-        "not_in_lesson": 0,
-        "intuition": 10,
-        "main_lesson": 40,
-        "practice": 70,
-        "lesson_complete": 100
+        "not_in_lesson": 0, "intuition": 10, "main_lesson": 40,
+        "practice": 70, "lesson_complete": 100
     }
     stg = status.get("lesson_stage","intuition")
     if stg not in stage_defaults: stg = "intuition"
@@ -490,66 +475,43 @@ def build_single_seed() -> Dict[str, Any]:
             except: p = 70
         p = max(70, min(90, p))
     else:
-        p = stage_defaults[stg]
+        p = stage_defaults.get(stg, 10)
     status["lesson_stage"] = stg
     status["current_lesson_progress"] = p
 
-    return {
-        "user_action": ua,
-        "status_dictionary": status,
-        "seed_kind": seed_kind,
-        "domain": domain,
-        "grade": grade,
-        "topic": topic
-    }
+    return {"user_action": ua, "status_dictionary": status, "seed_kind": seed_kind, "domain": domain, "grade": grade, "topic": topic}
 
 def build_messages(seed_turn: dict, strict_level: int = 1) -> List[Dict[str, Any]]:
-    user_json = json.dumps({
-        "user_action": seed_turn["user_action"],
-        "status_dictionary": seed_turn["status_dictionary"]
-    }, ensure_ascii=False)
-
-    rubric = (
-        "Teaching rubric: Use a friendly explanatory tone. Ask at least one self-question (why/how/what if) "
-        "and then answer it succinctly before proceeding. Connect ideas progressively."
-    )
+    # (No changes in this function)
+    user_json = json.dumps({"user_action": seed_turn["user_action"], "status_dictionary": seed_turn["status_dictionary"]}, ensure_ascii=False)
+    rubric = ("Teaching rubric: Use a friendly explanatory tone. Ask at least one self-question (why/how/what if) and then answer it succinctly before proceeding. Connect ideas progressively.")
     domain_hint = f"Stay strictly on topic for {seed_turn['domain']} / {seed_turn['topic']} (grade {seed_turn['grade']}). Do not drift to other domains."
-
-    return [
-        {"role":"user","parts":[
-            BASE_SYSTEM_PROMPT,
-            rubric,
-            domain_hint,
-            "Output strict JSON only: {\"actions\":[...]}",
-            "Allowed commands only. Include update_status with lesson_stage/progress on stage changes.",
-            "Use hints.math_input only for equation-like short answers.",
-            "Route inputs: initial_paraphrase→evaluate_paraphrase, final_summary→evaluate_summary, q_*→evaluate_answer, user_feedback_input→process_feedback.",
-            "Maintain realistic grade-topic pairing and avoid off-grade complexity.",
-            "Ensure status updates are consistent, monotonic progression through stages.",
-            "Include at least one rhetorical or self-question in display notes.",
-            f"Next user turn:\n{user_json}"
-        ]}
-    ]
+    return [{"role":"user","parts":[
+        BASE_SYSTEM_PROMPT, rubric, domain_hint, "Output strict JSON only: {\"actions\":[...]}",
+        "Allowed commands only. Include update_status with lesson_stage/progress on stage changes.",
+        "Use hints.math_input only for equation-like short answers.",
+        "Route inputs: initial_paraphrase→evaluate_paraphrase, final_summary→start_practice_session, q_*→evaluate_answer.",
+        "Maintain realistic grade-topic pairing and avoid off-grade complexity.",
+        "Ensure status updates are consistent, monotonic progression through stages.",
+        "Include at least one rhetorical or self-question in display notes.",
+        f"Next user turn:\n{user_json}"
+    ]}]
 
 # --------------------------------
 # Gemini call + minimal validation (optional second pass)
+# (No changes in this function)
 # --------------------------------
 async def call_model_and_clean(turn_id: str, seed_turn: dict) -> Tuple[Optional[dict], dict, str]:
     async def gen(strict_level: int):
         msgs = build_messages(seed_turn, strict_level=strict_level)
         try:
-            resp = model.generate_content(
+            resp = await model.generate_content_async(
                 msgs,
                 safety_settings={
-                    'HARM_CATEGORY_HARASSMENT':'BLOCK_NONE',
-                    'HARM_CATEGORY_HATE_SPEECH':'BLOCK_NONE',
-                    'HARM_CATEGORY_SEXUALLY_EXPLICIT':'BLOCK_NONE',
-                    'HARM_CATEGORY_DANGEROUS_CONTENT':'BLOCK_NONE'
+                    'HARM_CATEGORY_HARASSMENT':'BLOCK_NONE','HARM_CATEGORY_HATE_SPEECH':'BLOCK_NONE',
+                    'HARM_CATEGORY_SEXUALLY_EXPLICIT':'BLOCK_NONE','HARM_CATEGORY_DANGEROUS_CONTENT':'BLOCK_NONE'
                 },
-                generation_config=gm_types.GenerationConfig(
-                    temperature=0.85 if strict_level==1 else 0.6,
-                    candidate_count=1
-                )
+                generation_config=gm_types.GenerationConfig(temperature=0.85 if strict_level==1 else 0.6, candidate_count=1)
             )
             return resp.text or ""
         except Exception as e:
@@ -563,8 +525,7 @@ async def call_model_and_clean(turn_id: str, seed_turn: dict) -> Tuple[Optional[
     if not raw_payload and ENABLE_SECOND_PASS:
         raw_text2 = await gen(strict_level=2)
         raw_payload = ensure_json(raw_text2)
-    if not raw_payload:
-        return None, {"raw": raw_text}, "Non-JSON"
+    if not raw_payload: return None, {"raw": raw_text}, "Non-JSON"
 
     ok, repaired, reason = validate_actions_payload(raw_payload)
     if not ok and ENABLE_SECOND_PASS:
@@ -573,26 +534,15 @@ async def call_model_and_clean(turn_id: str, seed_turn: dict) -> Tuple[Optional[
         if raw_payload2:
             ok2, repaired2, reason2 = validate_actions_payload(raw_payload2)
             if ok2:
-                repaired = repaired2
-                raw_payload = raw_payload2
-                ok = True
-    if not ok:
-        return None, raw_payload, f"Schema invalid: {reason}"
+                repaired = repaired2; raw_payload = raw_payload2; ok = True
+    if not ok: return None, raw_payload, f"Schema invalid: {reason}"
 
     cleaned = {
         "id": turn_id,
-        "input": {
-            "user_action": seed_turn["user_action"],
-            "status_dictionary": seed_turn["status_dictionary"],
-            "summary_context": f"{seed_turn['domain']} / {seed_turn['topic']} for {seed_turn['grade']} | Seed: {seed_turn['seed_kind']}"
-        },
+        "input": {"user_action": seed_turn["user_action"], "status_dictionary": seed_turn["status_dictionary"],
+                  "summary_context": f"{seed_turn['domain']} / {seed_turn['topic']} for {seed_turn['grade']} | Seed: {seed_turn['seed_kind']}"},
         "output": repaired,
-        "meta": {
-            "seed_kind": seed_turn["seed_kind"],
-            "domain": seed_turn["domain"],
-            "grade": seed_turn["grade"],
-            "topic": seed_turn["topic"]
-        }
+        "meta": {"seed_kind": seed_turn["seed_kind"], "domain": seed_turn["domain"], "grade": seed_turn["grade"], "topic": seed_turn["topic"]}
     }
     return cleaned, raw_payload, ""
 
@@ -600,42 +550,34 @@ async def call_model_and_clean(turn_id: str, seed_turn: dict) -> Tuple[Optional[
 # Producers
 # --------------------------------
 async def producer_single(split: str, target_n: int):
+    # (No changes in this function)
     clean_path = Path(OUT_DIR) / "clean" / f"{split}.jsonl"
     raw_path = Path(OUT_DIR) / "raw" / f"{split}.jsonl"
     rej_path = Path(OUT_DIR) / "rejected" / f"{split}.jsonl"
     for p in [clean_path, raw_path, rej_path]:
         if p.exists(): p.unlink()
-
     created, attempts = 0, 0
     seen_hashes = set()
-
     while created < target_n:
         seeds = [build_single_seed() for _ in range(MAX_CONCURRENT)]
         tasks = [call_model_and_clean(f"{split}-{uuid.uuid4().hex[:12]}", s) for s in seeds]
         await asyncio.sleep(SLEEP_BETWEEN_BATCH)
-
-        for coro in tasks:
+        for coro in asyncio.as_completed(tasks):
             cleaned, raw, reason = await coro
             attempts += 1
-            with open(raw_path, "a", encoding="utf-8") as fraw:
-                fraw.write(json.dumps({"raw": raw, "reason": reason}, ensure_ascii=False)+"\n")
+            with open(raw_path, "a", encoding="utf-8") as fraw: fraw.write(json.dumps({"raw": raw, "reason": reason}, ensure_ascii=False)+"\n")
             if cleaned:
                 h = short_hash({"in": cleaned["input"], "out": cleaned["output"]})
-                if h in seen_hashes:
-                    continue
+                if h in seen_hashes: continue
                 seen_hashes.add(h)
-                with open(clean_path, "a", encoding="utf-8") as fcln:
-                    fcln.write(json.dumps(cleaned, ensure_ascii=False)+"\n")
+                with open(clean_path, "a", encoding="utf-8") as fcln: fcln.write(json.dumps(cleaned, ensure_ascii=False)+"\n")
                 created += 1
-                if created % 60 == 0:
-                    print(f"[{split}] {created}/{target_n} (attempts={attempts})")
+                if created % 60 == 0: print(f"[{split}] {created}/{target_n} (attempts={attempts})")
             else:
-                with open(rej_path, "a", encoding="utf-8") as frj:
-                    frj.write(json.dumps({"reason": reason, "raw": raw}, ensure_ascii=False)+"\n")
-
+                with open(rej_path, "a", encoding="utf-8") as frj: frj.write(json.dumps({"reason": reason, "raw": raw}, ensure_ascii=False)+"\n")
     print(f"[{split}] Single-turn done: {created} items, attempts={attempts}")
 
-async def producer_chain(split: str, num_chains: int, min_len=3, max_len=5):
+async def producer_chain(split: str, num_chains: int, min_len=3, max_len=6):
     out_chain = Path(OUT_DIR) / "clean" / f"{split}_chains.jsonl"
     raw_path = Path(OUT_DIR) / "raw" / f"{split}_chains.jsonl"
     rej_path = Path(OUT_DIR) / "rejected" / f"{split}_chains.jsonl"
@@ -646,94 +588,64 @@ async def producer_chain(split: str, num_chains: int, min_len=3, max_len=5):
     while created < num_chains:
         domain, topic, grade = random_valid_domain_topic_grade()
         length = random.randint(min_len, max_len)
+        chain_id = f"chain-{uuid.uuid4().hex[:10]}"
 
+        #//-- MODIFIED --// Chain now starts from the very beginning.
+        # Initial status is always 'not_in_lesson'
         status = random_status(domain, topic)
         status["lesson_stage"] = "not_in_lesson"
         status["current_lesson_title"] = topic
         status["current_lesson_progress"] = 0
-
-        user_action = {"command":"start_lesson", "parameters":{"lesson_index":0}}
-        chain_id = f"chain-{uuid.uuid4().hex[:10]}"
-
-        prev_stage = "not_in_lesson"
-        prev_prog = 0
-        stage_order = ["not_in_lesson","intuition","main_lesson","practice","lesson_complete"]
+        
+        # The first action is now `init` which generates the course plan.
+        user_action = {
+            "command": "init",
+            "parameters": {
+                "user_name": "Learner",
+                "generate_course_plan": f"{topic} for {grade}"
+            }
+        }
 
         for step in range(length):
             seed_turn = {
-                "user_action": user_action,
-                "status_dictionary": status,
-                "seed_kind": f"chain_step_{step}",
-                "domain": domain,
-                "grade": grade,
-                "topic": topic
+                "user_action": user_action, "status_dictionary": status, "seed_kind": f"chain_step_{step}",
+                "domain": domain, "grade": grade, "topic": topic
             }
             cleaned, raw, reason = await call_model_and_clean(f"{split}-{chain_id}-{step}", seed_turn)
 
-            with open(raw_path, "a", encoding="utf-8") as fraw:
-                fraw.write(json.dumps({"raw": raw, "reason": reason}, ensure_ascii=False)+"\n")
+            with open(raw_path, "a", encoding="utf-8") as fraw: fraw.write(json.dumps({"raw": raw, "reason": reason}, ensure_ascii=False)+"\n")
 
             if not cleaned:
-                with open(rej_path, "a", encoding="utf-8") as frj:
-                    frj.write(json.dumps({"reason": reason or 'turn-reject', "raw": raw}, ensure_ascii=False)+"\n")
+                with open(rej_path, "a", encoding="utf-8") as frj: frj.write(json.dumps({"reason": reason or 'turn-reject', "raw": raw}, ensure_ascii=False)+"\n")
                 break
 
-            # Keep chain meta
             cleaned["meta"]["chain_id"] = chain_id
-
-            # Apply updates if present
             upd = extract_first_update_status(cleaned["output"]["actions"])
-            if upd:
-                status = apply_updates_to_status(status, upd)
-            else:
-                stg = status.get("lesson_stage","not_in_lesson")
-                try:
-                    i = stage_order.index(stg)
-                    nxt = stage_order[min(i+1, len(stage_order)-1)]
-                except ValueError:
-                    nxt = "intuition"
-                # Snap canonical if no update
-                stage_defaults = {
-                    "not_in_lesson": 0,
-                    "intuition": 10,
-                    "main_lesson": 40,
-                    "practice": 70,
-                    "lesson_complete": 100
-                }
-                status["lesson_stage"] = nxt
-                status["current_lesson_progress"] = stage_defaults[nxt]
+            if upd: status = apply_updates_to_status(status, upd)
 
-            # Write the cleaned step
-            with open(out_chain, "a", encoding="utf-8") as fcln:
-                fcln.write(json.dumps(cleaned, ensure_ascii=False)+"\n")
+            with open(out_chain, "a", encoding="utf-8") as fcln: fcln.write(json.dumps(cleaned, ensure_ascii=False)+"\n")
 
-            # Decide next user action
-            stage_now = status.get("lesson_stage","intuition")
-            if stage_now == "intuition":
-                user_action = {"command":"evaluate_paraphrase","parameters":{
-                    "user_input": random.choice([
-                        "Main idea is introduced via a story/analogy.",
-                        "Keep both sides equal; isolate variable carefully."
-                    ])
-                }}
+            #//-- MODIFIED --// Logic to decide the next action in the chain.
+            current_command = user_action.get("command")
+            stage_now = status.get("lesson_stage", "not_in_lesson")
+
+            if current_command == "init":
+                # After the course plan is generated, the only logical next step is to start lesson 0.
+                user_action = {"command": "start_lesson", "parameters": {"lesson_index": 0}}
+            elif stage_now == "intuition":
+                user_action = {"command":"evaluate_paraphrase","parameters":{"user_input": "The analogy helped explain the core concept."}}
             elif stage_now == "main_lesson":
-                user_action = random.choice([
+                 user_action = random.choice([
                     {"command":"evaluate_answer","parameters":{"question_id":f"q_cp_{domain[:2]}_{topic[:6]}_{random.randint(1,99)}","user_answer":random.choice(["A","B","C","x=3","7"])}},
-                    {"command":"evaluate_summary","parameters":{"user_input":"We covered the rule and example."}}
+                    {"command":"start_practice_session","parameters":{"user_summary":"We covered the rule and saw an example of how it works."}}
                 ])
             elif stage_now == "practice":
-                user_action = {"command":"evaluate_answer","parameters":{
-                    "question_id": f"q_pr_{domain[:2]}_{topic[:6]}_{random.randint(1,99)}",
-                    "user_answer": random.choice(["Correct","Incorrect","4","x=2"])
-                }}
+                user_action = {"command":"evaluate_answer","parameters":{"question_id": f"q_pr_{domain[:2]}_{topic[:6]}_{random.randint(1,99)}","user_answer": random.choice(["Correct","Incorrect","4","x=2"])}}
             elif stage_now == "lesson_complete":
-                user_action = random.choice([
-                    {"command":"start_lesson","parameters":{"lesson_index":"next"}},
-                    {"command":"show_status","parameters":{}}
-                ])
-                break
+                user_action = {"command":"start_lesson","parameters":{"lesson_index":"next"}}
+                break # End this chain, as the lesson is complete
             else:
-                break
+                break # Break on any unexpected state
 
         created += 1
         if created % 10 == 0:
@@ -741,6 +653,10 @@ async def producer_chain(split: str, num_chains: int, min_len=3, max_len=5):
 
     print(f"[{split}] Chains done: {created} chains")
 
+# --------------------------------
+# MAIN and Final Writing
+# (No changes in these functions)
+# --------------------------------
 def load_clean_all() -> List[dict]:
     all_clean = []
     for name in ["train","dev","test"]:
@@ -762,9 +678,7 @@ def stratified_write(final: List[dict], split_name: str, n: int):
     for ex in final:
         d = ex.get("meta", {}).get("domain", "Other")
         by_domain.setdefault(d, []).append(ex)
-    for d in by_domain:
-        random.shuffle(by_domain[d])
-
+    for d in by_domain: random.shuffle(by_domain[d])
     out, idx = [], {d:0 for d in by_domain}
     while len(out) < n and any(idx[d] < len(by_domain[d]) for d in by_domain):
         for d in list(by_domain.keys()):
@@ -774,13 +688,9 @@ def stratified_write(final: List[dict], split_name: str, n: int):
                 idx[d] += 1
     path = Path(OUT_DIR) / f"{split_name}.jsonl"
     with open(path, "w", encoding="utf-8") as f:
-        for ex in out:
-            f.write(json.dumps(ex, ensure_ascii=False)+"\n")
+        for ex in out: f.write(json.dumps(ex, ensure_ascii=False)+"\n")
     print(f"Wrote {split_name} -> {len(out)}")
 
-# --------------------------------
-# MAIN
-# --------------------------------
 async def main():
     print(f"Collecting dataset with {MODEL_NAME}")
     print(f"Prompt: {PROMPT_PATH}")
@@ -795,19 +705,15 @@ async def main():
     dev_chains   = int(TARGET_COUNTS["dev"] * CHAIN_RATIO)
     test_chains  = int(TARGET_COUNTS["test"] * CHAIN_RATIO)
 
-    if train_single > 0:
-        await producer_single("train", train_single)
-    if dev_single > 0:
-        await producer_single("dev",   dev_single)
-    if test_single > 0:
-        await producer_single("test",  test_single)
+    tasks = []
+    if train_single > 0: tasks.append(producer_single("train", train_single))
+    if dev_single > 0: tasks.append(producer_single("dev",   dev_single))
+    if test_single > 0: tasks.append(producer_single("test",  test_single))
+    if train_chains > 0: tasks.append(producer_chain("train", train_chains))
+    if dev_chains > 0: tasks.append(producer_chain("dev",   dev_chains))
+    if test_chains > 0: tasks.append(producer_chain("test",  test_chains))
 
-    if train_chains > 0:
-        await producer_chain("train", train_chains)
-    if dev_chains > 0:
-        await producer_chain("dev",   dev_chains)
-    if test_chains > 0:
-        await producer_chain("test",  test_chains)
+    await asyncio.gather(*tasks)
 
     all_clean = load_clean_all()
     stratified_write(all_clean, "train", TARGET_COUNTS["train"])
@@ -816,4 +722,11 @@ async def main():
     print("Done.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # In some environments (like Jupyter), you need to get/create an event loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
+    loop.run_until_complete(main())

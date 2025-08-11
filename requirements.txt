@@ -1,4 +1,49 @@
-flask
-requests
-python-dotenv
-google-generativeai
+# Core
+torch==2.4.0
+torchvision
+transformers
+datasets
+accelerate
+peft
+bitsandbytes
+sentencepiece
+protobuf
+wandb
+cut_cross_entropy
+hf_transfer
+msgspec
+tyro
+boto3
+pyarrow==17.0.0
+# flash-attn==2.6.3
+#trl<0.9.0
+s3transfer
+
+boto3
+botocore 
+s3fs
+fsspec
+
+# Unsloth
+unsloth # pin a known-good version; or the latest that supports HF 4.43
+unsloth_zoo
+# RL extra (only needed for rlhf stage)
+#google-generativeai==0.7.2
+
+# AWS
+sagemaker==2.219.0
+
+# Misc
+python-dotenv==1.0.1
+
+timm
+
+
+
+torchvision
+
+# pip uninstall transformer-engine
+# pip uninstall unsloth -y
+# pip install git+https://github.com/unslothai/unsloth.git@a78b86e5c9c08b90f53a4ef89e6b9c6860fe66dc
+
+

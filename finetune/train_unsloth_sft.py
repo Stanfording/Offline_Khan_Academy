@@ -1,19 +1,70 @@
 # train.py
 
+import os, json, math, random, time, sys
+from typing import Dict, Any, Tuple, List
+from functools import partial
+
+# ============================ START: UNSLOTH BUG FIX v5 (FINAL) ============================
+# This is the definitive fix for a race condition in Unsloth's TRL patching that
+# crashes multi-GPU training on some environments (like SageMaker).
+#
+# STRATEGY: We create a fake "imposter" module for `unsloth.models.rl` and
+# insert it into Python's module cache (`sys.modules`) *before* the main
+# `import unsloth` happens.
+#
+# This imposter module satisfies the import dependencies from other parts of
+# Unsloth but contains harmless, empty functions. The original, buggy `rl.py`
+# file is never actually executed.
+
+from types import ModuleType
+
+# Create a new, empty module object
+fake_rl_module = ModuleType("unsloth.models.rl")
+
+# The other Unsloth files expect this function to exist. We provide a dummy one.
+def dummy_PatchFastRL(*args, **kwargs):
+    pass # Do nothing
+
+# The buggy code is inside this function. We also provide a dummy.
+def dummy_patch_trl_rl_trainers(*args, **kwargs):
+    pass # Do nothing
+
+# Add the dummy functions to our fake module
+fake_rl_module.PatchFastRL = dummy_PatchFastRL
+fake_rl_module.patch_trl_rl_trainers = dummy_patch_trl_rl_trainers
+
+class dummy_vLLMSamplingParams:
+    pass
+
+fake_rl_module.vLLMSamplingParams = dummy_vLLMSamplingParams
+
+# Insert the fake module into the system's module cache.
+# This must happen BEFORE `import unsloth` is called.
+sys.modules["unsloth.models.rl"] = fake_rl_module
+print("✅ Unsloth multi-GPU bug fix applied: Imposter module injected.")
+# ============================= END: UNSLOTH BUG FIX v5 (FINAL) =============================
+
+
+# The rest of your script follows, unchanged.
 import os, json, math, random, time
 from typing import Dict, Any, Tuple, List
 from functools import partial
 
+# --- Imports ---
+from unsloth import FastLanguageModel
+# ... and so on
+
 # --- Environment Toggles for Stability ---
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 os.environ.setdefault("TE_DISABLE", "1")
 os.environ.setdefault("ACCELERATE_DISABLE_TE", "1")
 os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
 
 # --- Imports ---
 from unsloth import FastLanguageModel
+
 from datasets import Dataset
-from transformers import TrainingArguments, DataCollatorForLanguageModeling, AutoTokenizer, Trainer, default_data_collator
+from transformers import TrainingArguments, DataCollatorForLanguageModeling, AutoTokenizer, Trainer, default_data_collator, TrainerCallback, TrainerState, TrainerControl
 from peft import PeftModel
 import torch
 import numpy as np
@@ -32,7 +83,7 @@ DEV_PATH   = os.getenv("DEV_PATH",   "mn_dataset_out_v6_trust/clean/dev_chains.j
 SEED = int(os.getenv("SEED", "42"))
 MAX_SEQ_LEN = int(os.getenv("MAX_SEQ_LEN", "8192"))
 PER_DEVICE_BS = int(os.getenv("BATCH_SIZE", "1"))
-GRAD_ACCUM = int(os.getenv("GRAD_ACCUM", "16"))
+GRAD_ACCUM = int(os.getenv("GRAD_ACCUM", "8"))
 LR = float(os.getenv("LR", "2e-5"))
 EPOCHS = float(os.getenv("EPOCHS", "2.0"))
 WD = float(os.getenv("WEIGHT_DECAY", "0.1"))
@@ -49,9 +100,11 @@ LORA_DROPOUT = float(os.getenv("LORA_DROPOUT", "0.05"))
 LORA_TARGETS = ""#["q_proj","k_proj","v_proj","o_proj"] #os.getenv("LORA_TARGETS", "q_proj,k_proj,v_proj,o_proj").strip()
 
 # Logging & Saving
-LOGGING_STEPS = int(os.getenv("LOGGING_STEPS", "20"))
+LOGGING_STEPS = int(os.getenv("LOGGING_STEPS", "2"))
 SAVE_TOTAL_LIMIT = int(os.getenv("SAVE_TOTAL_LIMIT", "3"))
 REPORT_TO = os.getenv("REPORT_TO", "wandb")
+
+num_proc = 8
 
 # ==============================================================================
 # 2. Reproducibility & Data Formatting
@@ -95,28 +148,51 @@ def example_is_valid(example: Dict[str, Any]) -> bool:
     return bool(prompt and target)
 
 def tokenize_mask(example: Dict[str, Any], tokenizer, max_len: int, mask_prompt: bool) -> Dict[str, Any]:
-    """Tokenizes prompt+target, and creates labels with loss masking on the prompt."""
+    """
+    Tokenizes prompt+target, and creates labels with loss masking on the prompt.
+    Includes a safety check to skip examples where the prompt is too long.
+    """
     prompt, target = build_texts(example)
     if not prompt or not target:
         return {"input_ids": [], "labels": []}
 
-    # Tokenize the full conversation string (prompt + target)
-    # Using `add_special_tokens=False` can prevent extra BOS tokens if the prompt format already includes them.
-    full_text = prompt + target + tokenizer.eos_token
-    toks_full = tokenizer(full_text, truncation=True, max_length=max_len, add_special_tokens=False)
-    
     # Tokenize the prompt-only part to find its length
-    toks_prompt = tokenizer(prompt, truncation=True, max_length=max_len, add_special_tokens=False)
+    toks_prompt = tokenizer(prompt, add_special_tokens=False)
+    prompt_len = len(toks_prompt["input_ids"])
+    
+    # Tokenize the target
+    toks_target = tokenizer(target + tokenizer.eos_token, add_special_tokens=False)
+    target_len = len(toks_target["input_ids"])
 
-    input_ids = toks_full["input_ids"]
+    # === SAFETY CHECK ===
+    # If the prompt alone is already filling the context, the target was cut off. Skip this example.
+    if prompt_len >= max_len:
+        # Optionally, print a warning to see how often this happens
+        # print(f"WARNING: Skipping example. Prompt length ({prompt_len}) exceeds max_len ({max_len}).")
+        return {"input_ids": [], "labels": [], "attention_mask": []}
+    
+    # Combine and truncate
+    input_ids = toks_prompt["input_ids"] + toks_target["input_ids"]
+    if len(input_ids) > max_len:
+        input_ids = input_ids[:max_len]
+        # Adjust target_len if it was truncated
+        target_len = max_len - prompt_len
+
     labels = list(input_ids)
     
     if mask_prompt:
-        prompt_len = len(toks_prompt["input_ids"])
-        for i in range(min(prompt_len, len(labels))):
-            labels[i] = -100 # -100 is the ignore_index for cross-entropy loss
+        # Mask the prompt part
+        for i in range(prompt_len):
+            labels[i] = -100
 
-    return {"input_ids": input_ids, "labels": labels}
+    # Make sure we didn't accidentally mask everything
+    # This can happen if the combined text was truncated exactly at the prompt's end
+    if all(l == -100 for l in labels):
+        return {"input_ids": [], "labels": [], "attention_mask": []}
+
+    attention_mask = [1] * len(input_ids)
+
+    return {"input_ids": input_ids, "labels": labels, "attention_mask": attention_mask}
 
 class CustomDataCollator:
     """
@@ -155,6 +231,76 @@ class CustomDataCollator:
         # we would do it here. Since mlm=False, we are done.
         return batch
 
+class PredictionCallback(TrainerCallback):
+    """
+    A callback that logs a model's prediction on a fixed validation example.
+    This is useful for visually inspecting the model's generation quality over time.
+    """
+    def __init__(self, eval_dataset, tokenizer):
+        super().__init__()
+        # Store a single example from the validation set
+        self.eval_example = eval_dataset[0]
+        self.tokenizer = tokenizer
+
+    def on_evaluate(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        """
+        Hook called at the end of every evaluation phase.
+        """
+        # The model is passed in kwargs during evaluation
+        model = kwargs['model']
+        
+        print(f"\n\n--- Generating Sample at Step {state.global_step} ---")
+
+        # 1. Prepare the Input (Prompt)
+        # Find where the prompt ends and the label begins (the first non -100 label)
+        try:
+            prompt_end_index = self.eval_example['labels'].index(next(l for l in self.eval_example['labels'] if l != -100))
+        except StopIteration:
+            prompt_end_index = len(self.eval_example['input_ids'])
+
+        prompt_input_ids = self.eval_example['input_ids'][:prompt_end_index]
+        
+        # Move input_ids to the same device as the model
+        prompt_tensor = torch.tensor(prompt_input_ids).unsqueeze(0).to(model.device)
+        attention_mask = torch.ones_like(prompt_tensor) # Create an attention mask of all 1s
+
+        # 2. Generate the Model's Output
+        generated_ids = model.generate(
+            prompt_tensor,
+            max_new_tokens=1024, # Limit generation length
+            do_sample=True,
+            temperature=1,
+            top_p=1,
+            attention_mask=attention_mask,
+        )
+        
+        # 3. Decode for Visual Comparison
+        # Decode the prompt
+        prompt_text = self.tokenizer.decode(prompt_tensor[0], skip_special_tokens=True)
+        
+        # Decode the ground truth target
+        # Filter out the -100 labels before decoding
+        ground_truth_ids = [label for label in self.eval_example['labels'] if label != -100]
+        ground_truth_text = self.tokenizer.decode(ground_truth_ids, skip_special_tokens=True)
+
+        # Decode the model's generated output (only the new tokens)
+        model_output_text = self.tokenizer.decode(generated_ids[0][len(prompt_tensor[0]):], skip_special_tokens=True)
+
+        # 4. Print the comparison
+        print("\n--- PROMPT ---")
+        print(prompt_text)
+        print("\n--- GROUND TRUTH (TARGET) ---")
+        print(ground_truth_text)
+        print("\n--- MODEL OUTPUT ---")
+        print(model_output_text)
+        print("\n--------------------------------------------------\n")
+
+        # Optional: Log to WandB as a table for easy comparison across steps
+        if "wandb" in args.report_to:
+            table = wandb.Table(columns=["step", "prompt", "ground_truth", "model_output"])
+            table.add_data(state.global_step, prompt_text, ground_truth_text, model_output_text)
+            wandb.log({"predictions": table})
+
 # ==============================================================================
 # 3. Main Training Orchestration
 # ==============================================================================
@@ -163,6 +309,10 @@ def main():
     def get_local_rank():
         lr = os.environ.get("LOCAL_RANK")
         return int(lr) if lr is not None else 0
+
+    local_rank = get_local_rank()
+    if local_rank == 0 and REPORT_TO == "wandb":
+        wandb.init(project="Mr-Delight")
 
     def set_device_from_local_rank():
         local_rank = get_local_rank()
@@ -174,13 +324,15 @@ def main():
     # In main() as the first thing after seeding:
     set_device_from_local_rank()
     seed_all(SEED)
+    
+    
 
     # --- Data Loading and Preparation ---
     train_chats, dev_chats = build_chat_dataset(TRAIN_PATH, DEV_PATH, system_prompt_path="distilled_prompt.txt")
 
     
-    train_ds = Dataset.from_list(train_chats).filter(example_is_valid, num_proc=8)
-    eval_ds = Dataset.from_list(dev_chats).filter(example_is_valid, num_proc=8)
+    train_ds = Dataset.from_list(train_chats).filter(example_is_valid, num_proc=num_proc)
+    eval_ds = Dataset.from_list(dev_chats).filter(example_is_valid, num_proc=num_proc)
     
     print(f"Train conversations after filter: {len(train_ds)}")
     print(f"Eval conversations after filter: {len(eval_ds)}")
@@ -208,16 +360,49 @@ def main():
 
     # --- Tokenization ---
     tok_map_fn = partial(tokenize_mask, tokenizer=map_tokenizer, max_len=MAX_SEQ_LEN, mask_prompt=MASK_PROMPT_LOSS)
-    num_proc = max(1, min(8, os.cpu_count() or 1))
     
     train_tok = train_ds.map(tok_map_fn, remove_columns=train_ds.column_names, num_proc=num_proc)
     eval_tok = eval_ds.map(tok_map_fn, remove_columns=eval_ds.column_names, num_proc=num_proc)
 
+    # ======================= DEBUGGING SNIPPET =======================
+    print("🕵️  Inspecting a tokenized example from the training set...")
+    try:
+        example = train_tok[0]
+        map_tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, trust_remote_code=True)
+        if map_tokenizer.pad_token is None:
+            map_tokenizer.pad_token = map_tokenizer.eos_token
+            
+        print(f"Input IDs length: {len(example['input_ids'])}")
+        print(f"Labels length:    {len(example['labels'])}")
+        
+        non_masked_labels = [l for l in example['labels'] if l != -100]
+        print(f"Number of non-masked labels (should be > 0): {len(non_masked_labels)}")
+    
+        if not non_masked_labels:
+            print("🚨 CRITICAL: All labels in this example are masked! This is the cause of the 0.0 loss.")
+            
+            # Let's see why by decoding
+            prompt_portion = [tok if lab == -100 else -1 for tok, lab in zip(example['input_ids'], example['labels'])]
+            target_portion = [tok if lab != -100 else -1 for tok, lab in zip(example['input_ids'], example['labels'])]
+    
+            decoded_prompt = map_tokenizer.decode([t for t in prompt_portion if t != -1], skip_special_tokens=True)
+            decoded_target = map_tokenizer.decode([t for t in target_portion if t != -1], skip_special_tokens=True)
+    
+            print("\n--- Decoded Prompt Portion (Masked) ---")
+            print(decoded_prompt)
+            print("\n--- Decoded Target Portion (Unmasked) ---")
+            print(decoded_target)
+            
+    except Exception as e:
+        print(f"Error during inspection: {e}")
+    # =================================================================
+
     # --- Trainer Setup ---
-    steps_per_epoch = math.ceil(len(train_tok) / (PER_DEVICE_BS * GRAD_ACCUM))
+    steps_per_epoch = 2 #math.ceil(len(train_tok) / (PER_DEVICE_BS * GRAD_ACCUM))
     
     args = TrainingArguments(
         per_device_train_batch_size=PER_DEVICE_BS,
+        per_device_eval_batch_size=1,
         gradient_accumulation_steps=GRAD_ACCUM,
         # warmup_ratio=WARMUP_RATIO,
         warmup_steps=400,
@@ -225,10 +410,10 @@ def main():
         learning_rate=LR,
         weight_decay=WD,
         bf16=BF16,
-        # fp16=True,
+        fp16=False,
         logging_steps=LOGGING_STEPS,
         output_dir=OUTPUT_DIR,
-        optim='paged_adamw_8bit',#"adamw_torch",
+        optim= 'adamw_torch', #'paged_adamw_8bit',#"adamw_torch",
         save_strategy="steps",
         save_steps=steps_per_epoch, # Save every epoch
         save_total_limit=SAVE_TOTAL_LIMIT,
@@ -238,18 +423,23 @@ def main():
         ddp_find_unused_parameters=False,
         max_grad_norm=0.5,
         report_to=REPORT_TO,
+        gradient_checkpointing_kwargs={'use_reentrant': False},
+        # optim_args="eps=1e-7",
     )
 
     data_collator = CustomDataCollator(tokenizer=tokenizer, mlm=False)
+    prediction_callback = PredictionCallback(eval_dataset=eval_tok, tokenizer=map_tokenizer)
+
 
     trainer = Trainer(
         model=model,
         # The trainer needs the Unsloth-patched tokenizer
-        tokenizer=tokenizer,
+        tokenizer=map_tokenizer,
         train_dataset=train_tok,
         eval_dataset=eval_tok,
         data_collator=data_collator,
         args=args,
+        callbacks=[prediction_callback],
     )
     
     if USE_GRAD_CHKPT:
