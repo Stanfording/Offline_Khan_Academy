@@ -85,7 +85,7 @@ OLLAMA_PERSIST_DIR=.ollama_sessions
 *   **`GOOGLE_API_KEY`**: Obtain this from the [Google AI Studio](https://makersuite.google.com/app/apikey).
 *   **`OLLAMA_MODEL`**: If you're using Ollama, `gemma3n-sft:latest` refers to a fine-tuned version of Gemma 3n. If you haven't fine-tuned, you might use a base model like `gemma3n:e4b` or `gemma:7b`.
 
-## ⚙️ Ollama Setup Guide (for Local Inference)
+## ⚙️ Ollama Setup Guide for Offline Local Inference (Optional)
 
 If you choose `MODEL_BACKEND=ollama` in your `.env` file, you'll need to set up Ollama locally.
 
