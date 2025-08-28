@@ -7,20 +7,20 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 load_dotenv()
 
-from model_provider import ModelProvider, GeminiProvider, OllamaProvider
+# MODIFIED: Import NvidiaProvider
+from model_provider import ModelProvider, GeminiProvider, OllamaProvider, NvidiaProvider
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 MODEL_BACKEND = os.getenv("MODEL_BACKEND", "ollama").lower()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash-latest")
 OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3n:e4b")
-OLLAMA_PERSIST_DIR = os.getenv("OLLAMA_PERSIST_DIR", None)
-OLLAMA_MAX_TURNS = int(os.getenv("OLLAMA_MAX_TURNS", "6"))
-OLLAMA_SUMMARIZE_AFTER = int(os.getenv("OLLAMA_SUMMARIZE_AFTER", "8"))
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma2:9b")
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "openai/gpt-oss-20b")
 
-PROMPT_PATH = os.path.join(os.path.dirname(__file__), "finetune/distilled_prompt.txt" ) # "prompt3_2.txt"
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompt3_2.txt" )
 with open(PROMPT_PATH, "r", encoding="utf-8") as f:
     base_prompt = f.read()
 
@@ -37,195 +37,96 @@ CONTRACT_APPENDIX = """
 - evaluate_paraphrase for initial paraphrase; evaluate_summary for final summary.
 Your response must be ONLY JSON. No extra commentary.
 """
-TUTOR_SYSTEM_PROMPT = base_prompt.strip() + "\n" + CONTRACT_APPENDIX.strip()
+# This is no longer the full system prompt, just the user-level message history start.
+# The provider will now construct the real system/developer prompts.
+TUTOR_HISTORY_START = [{"role": "system", "content": "Conversation Start"}]
+
 
 def build_provider() -> ModelProvider:
     if MODEL_BACKEND == "ollama":
         logging.info(f"Using OllamaProvider ({OLLAMA_MODEL} @ {OLLAMA_ENDPOINT})")
-        return OllamaProvider(
-            endpoint=OLLAMA_ENDPOINT,
-            model=OLLAMA_MODEL,
-            system_prompt=TUTOR_SYSTEM_PROMPT,
-            max_window_turns=OLLAMA_MAX_TURNS,
-            summarize_after_turns=OLLAMA_SUMMARIZE_AFTER,
-            persist_dir=OLLAMA_PERSIST_DIR
+        # For Ollama, we still combine the prompt.
+        full_prompt = base_prompt.strip() + "\n" + CONTRACT_APPENDIX.strip()
+        # This part of OllamaProvider would need to be updated if it used a stateful approach.
+        # Since we made it stateless, we'll handle this in ask_tutor.
+        return OllamaProvider(endpoint=OLLAMA_ENDPOINT, model=OLLAMA_MODEL)
+
+    elif MODEL_BACKEND == "nvidia":
+        logging.info(f"Using NvidiaProvider ({NVIDIA_MODEL})")
+        key = os.getenv("NVIDIA_API_KEY")
+        if not key: logging.error("NVIDIA_API_KEY environment variable not found!")
+        else: logging.info(f"NVIDIA_API_KEY loaded successfully. Starts with: {key[:4]}...")
+        
+        # **THE FIX**: Pass the separated prompt components to the provider.
+        return NvidiaProvider(
+            api_key=NVIDIA_API_KEY,
+            model=NVIDIA_MODEL,
+            developer_prompt=base_prompt,
+            output_contract=CONTRACT_APPENDIX
         )
+    
     logging.info(f"Using GeminiProvider ({GEMINI_MODEL})")
     return GeminiProvider(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
 
 provider: ModelProvider = build_provider()
 
-NUM_RECENT_CHATS_TO_KEEP = 3
-NUM_CHATS_BEFORE_SUMMARIZATION = 6
-
-def _extract_multimodal_parts(user_action: Dict[str, Any]) -> Dict[str, Any]:
-    text = json.dumps(user_action, ensure_ascii=False)
-    image_b64 = None
-    mime = None
+def _extract_image_from_action(user_action: Dict[str, Any]) -> Dict[str, Any] | None:
     try:
         params = (user_action or {}).get("parameters", {})
         if "user_answer" in params and isinstance(params["user_answer"], dict):
             img = params["user_answer"]
             if "image_b64" in img:
-                image_b64 = img.get("image_b64", "")
-                mime = img.get("mime_type", "image/png")
-    except Exception:
-        pass
-    out = {"text": text}
-    if image_b64:
-        out["image"] = {"mime_type": mime or "image/png", "b64": image_b64}
-    return out
-
-def _extract_balanced_json_block(s: str):
-    start = s.find("{")
-    if start == -1:
-        return None
-    stack = 0
-    for i in range(start, len(s)):
-        if s[i] == "{":
-            stack += 1
-        elif s[i] == "}":
-            stack -= 1
-            if stack == 0:
-                return s[start:i+1]
+                return {"b64": img.get("image_b64", ""), "mime_type": img.get("mime_type", "image/png")}
+    except Exception: pass
     return None
 
-def _summarize_conversation(messages_to_summarize):
-    extracted_content = []
-    for msg in messages_to_summarize:
-        if msg["role"] == "user":
-            try:
-                user_data = json.loads(msg["content"])
-                if "user_action" in user_data and "parameters" in user_data["user_action"]:
-                    action_params = user_data["user_action"]["parameters"]
-                    command = user_data["user_action"]["command"]
-                    if command == "generate_course_plan" and "query" in action_params:
-                        extracted_content.append(f"User wants: {action_params['query']}")
-                    elif command in ["evaluate_paraphrase", "evaluate_summary"] and "user_input" in action_params:
-                        extracted_content.append(f"User wrote: {action_params['user_input']}")
-                    elif command == "evaluate_answer":
-                        extracted_content.append(f"Answered '{action_params.get('question_id','?')}': {action_params.get('user_answer')}")
-                    elif command in ["show_status", "give_feedback", "start_lesson", "skip_practice"]:
-                        extracted_content.append(f"User clicked '{command}' params {json.dumps(action_params)}")
-                elif "status_dictionary" in user_data:
-                    extracted_content.append(f"State: {json.dumps(user_data['status_dictionary'])}")
-            except json.JSONDecodeError:
-                extracted_content.append(f"User: {msg['content']}")
-        elif msg["role"] == "assistant":
-            try:
-                assistant = json.loads(msg["content"])
-                for action in assistant.get("actions", []):
-                    if action["command"] == "ui_display_notes":
-                        extracted_content.append(f"Note: {action['parameters']['content']}")
-                    elif "question_text" in action.get("parameters", {}):
-                        extracted_content.append(f"Q: {action['parameters']['question_text']}")
-                    elif action["command"] == "update_status":
-                        ups = action["parameters"].get("updates", {})
-                        if "lesson_stage" in ups:
-                            extracted_content.append(f"Stage -> {ups['lesson_stage']}")
-                        if "current_lesson_progress" in ups:
-                            extracted_content.append(f"Progress -> {ups['current_lesson_progress']}")
-            except json.JSONDecodeError:
-                extracted_content.append(f"Assistant: {msg['content']}")
-    text = "\n".join(extracted_content).strip()
-    if not text:
-        return "No relevant previous conversation to summarize."
-    try:
-        return provider.summarize("Summarize key facts for context:\n" + text)
-    except Exception as e:
-        logging.error(f"Summarization error via provider {provider.name()}: {e}")
-        return "Previous conversation context lost due to summarization error."
+def _extract_balanced_json_block(s: str):
+    start = s.find("{");
+    if start == -1: return None
+    stack = 0
+    for i in range(start, len(s)):
+        if s[i] == "{": stack += 1
+        elif s[i] == "}":
+            stack -= 1
+            if stack == 0: return s[start:i+1]
+    return None
 
-def ask_tutor(user_action_data, current_status_dictionary, messages_history=None, session_id: str = None):
+def ask_tutor(user_action_data, current_status_dictionary, messages_history: List[Dict[str, str]]=None, session_id: str = None):
     logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id}")
-    if messages_history is None or len(messages_history) == 0 or not (messages_history[0].get("role") == "system" and messages_history[0].get("content") == TUTOR_SYSTEM_PROMPT):
-        messages_history = [{"role": "system", "content": TUTOR_SYSTEM_PROMPT}]
 
-    user_input_content = json.dumps({
-        "user_action": user_action_data,
-        "status_dictionary": current_status_dictionary
-    })
-    messages_history.append({"role": "user", "content": user_input_content})
+    # For Ollama/Gemini, prepend the full prompt if history is new.
+    # For Nvidia, this system message will be ignored and replaced by the structured prompt.
+    if messages_history is None or not messages_history:
+        full_prompt_for_others = base_prompt.strip() + "\n" + CONTRACT_APPENDIX.strip()
+        messages_history = [{"role": "system", "content": full_prompt_for_others}]
 
-    current_payload_messages_for_model: List[Dict[str, Any]] = []
-    conversational_messages = messages_history[1:]
-
-    if (len(conversational_messages)) > (2 * NUM_CHATS_BEFORE_SUMMARIZATION):
-        num_messages_to_keep_recent = (2 * NUM_RECENT_CHATS_TO_KEEP) + 1
-        num_messages_to_summarize = len(conversational_messages) - num_messages_to_keep_recent
-        if num_messages_to_summarize > 0:
-            summary_text = _summarize_conversation(conversational_messages[:num_messages_to_summarize])
-            current_payload_messages_for_model.append({"role": "user", "parts": [f"Context summary: {summary_text}"]})
-            current_payload_messages_for_model.append({"role": "model", "parts": ["Summary received."]})
-        for msg in conversational_messages[num_messages_to_summarize:]:
-            role = "model" if msg["role"] == "assistant" else "user"
-            current_payload_messages_for_model.append({"role": role, "parts": [msg["content"]]})
-    else:
-        for msg in conversational_messages:
-            role = "model" if msg["role"] == "assistant" else "user"
-            current_payload_messages_for_model.append({"role": role, "parts": [msg["content"]]})
-
-    if not current_payload_messages_for_model:
-        current_payload_messages_for_model = [{"role": "user", "parts": [user_input_content]}]
-
-    # Build base_messages exactly like before
-    first_parts = current_payload_messages_for_model[0]["parts"]
-    base_messages = [
-        {"role": "user", "parts": [TUTOR_SYSTEM_PROMPT] + first_parts},
-    ] + current_payload_messages_for_model[1:] + [
-        {"role": "user", "parts": ['Output must be strict JSON only: {"actions":[...]}']}
-    ]
-
-    # Detect if current turn includes an image from drawing_board
-    mm = _extract_multimodal_parts(user_action_data)
-
-    # If Gemini, add inline image data to the last user message
-    if mm.get("image") and provider.name().startswith("gemini:"):
-        for i in range(len(base_messages)-1, -1, -1):
-            if base_messages[i].get("role") == "user":
-                # Combine any existing text parts into a single string
-                combined_text = "\n".join(
-                    [p for p in base_messages[i].get("parts", []) if isinstance(p, str)]
-                )
-                base_messages[i]["parts"] = [
-                    combined_text,
-                    {"inline_data": {
-                        "mime_type": mm["image"]["mime_type"],
-                        "data": mm["image"]["b64"]
-                    }}
-                ]
-                break
-
-    # If Ollama, inject a small JSON marker the provider will parse and convert to images=[base64]
-    elif mm.get("image") and provider.name().startswith("ollama:"):
-        marker = json.dumps({"__image__": {
-            "mime_type": mm["image"]["mime_type"],
-            "b64": mm["image"]["b64"]
-        }})
-        for i in range(len(base_messages)-1, -1, -1):
-            if base_messages[i].get("role") == "user":
-                base_messages[i]["parts"].append(f"\n{marker}")
-                break
-
-    # Use the modified messages going forward
-    final_messages = base_messages
+    user_input_content = json.dumps({"user_action": user_action_data, "status_dictionary": current_status_dictionary}, ensure_ascii=False)
+    current_user_message: Dict[str, Any] = {"role": "user", "content": user_input_content}
+    image_data = _extract_image_from_action(user_action_data)
+    if image_data: current_user_message["image"] = image_data
+    messages_history.append(current_user_message)
 
     try:
-        raw_text = provider.generate_content(final_messages, temperature=0.7, session_id=session_id)
-        # logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id} raw_text={raw_text}")
+        raw_text_response = provider.generate_content(messages=messages_history, temperature=1.0, session_id=session_id)
+
+        logging.info(f"raw_text_response, {raw_text_response}")
+        
+        llm_response_json = None
         try:
-            llm_response_json = json.loads(raw_text)
-            logging.info(f"-> ask_tutor using {provider.name()} cmd={user_action_data.get('command')} sid={session_id} raw_text={raw_text} llm_response_json={llm_response_json}")
+            llm_response_json = json.loads(raw_text_response)
         except json.JSONDecodeError:
-            candidate = _extract_balanced_json_block(raw_text)
+            candidate = _extract_balanced_json_block(raw_text_response)
             if candidate:
-                llm_response_json = json.loads(candidate)
-            else:
+                try: llm_response_json = json.loads(candidate)
+                except json.JSONDecodeError: pass
+            if not llm_response_json:
+                logging.error(f"Failed to parse JSON from LLM response: {raw_text_response}")
                 return {"actions": [{"command": "ui_display_notes", "parameters": {"content": "Mr. Delight had a parsing hiccup. Please try again."}}]}, messages_history
 
-        messages_history.append({"role": "assistant", "content": json.dumps(llm_response_json)})
+        logging.info(f"<- ask_tutor received valid JSON from {provider.name()} for cmd={user_action_data.get('command')}")
+        messages_history.append({"role": "assistant", "content": json.dumps(llm_response_json, ensure_ascii=False)})
         return llm_response_json, messages_history
 
     except Exception as e:
-        logging.error(f"Model call failed ({provider.name()}): {e}")
+        logging.error(f"Model call failed ({provider.name()}): {e}", exc_info=True)
         return {"actions": [{"command": "ui_display_notes", "parameters": {"content": f"Mr. Delight is offline: {str(e)}. Please refresh and try again."}}]}, messages_history
