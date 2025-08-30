@@ -141,4 +141,3 @@ This process allows for creating custom, highly specialized models for the appli
 ## 🌟 Project Summary
 
 "The Magic Notebook" is more than just an application; it's a vision for a more equitable and engaging educational future. By seamlessly blending cutting-edge AI, dynamic user experience, and a strong commitment to offline accessibility, we're empowering learners worldwide to embark on a truly personalized and magical discovery journey. This project stands as a testament to how thoughtful technical design can break down barriers and unlock the full potential of adaptive learning for everyone.
-```
